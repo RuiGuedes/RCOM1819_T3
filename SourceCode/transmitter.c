@@ -14,6 +14,9 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
+#define FLAG 0x7e
+#define A 0x03
+#define C 0x03
 
 volatile int STOP=FALSE;
 
@@ -73,13 +76,28 @@ int main(int argc, char** argv)
 
     printf("New termios structure set\n");
 
+    unsigned char SET[5];
+
+    SET[0] = FLAG;
+    SET[1] = A;
+    SET[2] = C;
+    SET[3] = SET[1]^SET[2];
+    SET[4] = FLAG;
+
+    int writtenBytes = 0;
+
+    while(writtenBytes < 5) {
+      writtenBytes += write(fd,SET + writtenBytes, 6 - writtenBytes);
+    }
+
+    /*
     gets(buf);
 
     int length = strlen(buf);
     int writtenBytes = 0;
 
     while(writtenBytes < length) {
-      writtenBytes += write(fd,buf + writtenBytes,length+1)
+      writtenBytes += write(fd,buf + writtenBytes,length+1);
     }
 
     do {
@@ -87,6 +105,7 @@ int main(int argc, char** argv)
     } while (buf[i++] != '\0');
 
     printf("%s\n", buf);
+    */
 
     sleep(2);
 
