@@ -3,11 +3,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <termios.h>
+//#include <termios.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 #define FLAG    0x7E
 #define EMIT_A       0x03
@@ -92,20 +92,18 @@ int main(int argc, char** argv)
   */
 
     // Setup receiving SET message
-    unsigned char byte[8];
+    unsigned short byte;
 
-    enum set_states = {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
+    enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
     enum set_states state = START;
 
     while (state != END) {
-
-      for (int i = 0; i < 8; i++)
-        read(fd, byte + i, 1);
+      read(fd, &byte, 1);
 
       switch(state) {
         case START:
           if (byte == FLAG)
-            state = FLAG_REC        
+            state = FLAG_REC;        
         break;
         case FLAG_REC:
           if (byte == EMIT_A)
@@ -122,7 +120,7 @@ int main(int argc, char** argv)
             state = START;
         break;
         case C_REC:
-          if (A^C == byte)
+          if (EMIT_A^SET_C == byte)
             state = BCC_OK;
           else if (byte == FLAG)
             state = FLAG_REC;
