@@ -10,8 +10,8 @@
 //#include <unistd.h>
 
 #define FLAG    0x7E
-#define EMIT_A       0x03
-#define SET_C       0x07
+#define EMIT_A  0x03
+#define SET_C   0x03
 
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
@@ -24,7 +24,6 @@ int main(int argc, char** argv)
 {
     int fd;
     struct termios oldtio,newtio;
-    char buf[255];
 
     if ( (argc < 2) || 
   	     ((strcmp("/dev/ttyS0", argv[1])!=0) && 
@@ -120,7 +119,7 @@ int main(int argc, char** argv)
             state = START;
         break;
         case C_REC:
-          if (EMIT_A^SET_C == byte)
+          if ((EMIT_A^SET_C) == byte)
             state = BCC_OK;
           else if (byte == FLAG)
             state = FLAG_REC;
