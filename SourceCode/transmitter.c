@@ -22,7 +22,7 @@ int main(int argc, char** argv)
     int fd,c, res;
     struct termios oldtio,newtio;
     char buf[255];
-    int i, sum = 0, speed = 0;
+    int i = 0, sum = 0, speed = 0;
 
     if ( (argc < 2) ||
   	     ((strcmp("/dev/ttyS0", argv[1])!=0) &&
@@ -64,8 +64,6 @@ int main(int argc, char** argv)
     leitura do(s) pr�ximo(s) caracter(es)
   */
 
-
-
     tcflush(fd, TCIOFLUSH);
 
     if ( tcsetattr(fd,TCSANOW,&newtio) == -1) {
@@ -75,17 +73,20 @@ int main(int argc, char** argv)
 
     printf("New termios structure set\n");
 
-    //fgets(buf, 255, stdin);
     gets(buf);
 
     int length = strlen(buf);
     int writtenBytes = 0;
 
-    //printf("%s\n", buf);
-    //printf("%d\n", length);
+    while(writtenBytes < length) {
+      writtenBytes += write(fd,buf + writtenBytes,length+1)
+    }
 
-    writtenBytes = write(fd,buf,length+1);
-    //printf("Byte: %d\n", writtenBytes);
+    do {
+      read(fd, buf + i, 1);
+    } while (buf[i++] != '\0');
+
+    printf("%s\n", buf);
 
     sleep(2);
 
@@ -93,7 +94,6 @@ int main(int argc, char** argv)
       perror("tcsetattr");
       exit(-1);
     }
-
 
     close(fd);
     return 0;
