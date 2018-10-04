@@ -92,7 +92,7 @@ int main(int argc, char** argv)
   */
 
     // Setup receiving SET message
-    unsigned short byte;
+    unsigned char byte;
 
     enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
     enum set_states state = START;
@@ -133,6 +133,8 @@ int main(int argc, char** argv)
           else
             state = START;
         break;
+        case END:
+          break;
       }
     }
 
