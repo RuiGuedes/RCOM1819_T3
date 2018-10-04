@@ -15,8 +15,10 @@
 #define FALSE 0
 #define TRUE 1
 #define FLAG 0x7e
-#define A 0x03
-#define C 0x03
+#define EMIT_A 0x03
+#define REC_A 0x01
+#define SET_C 0x03
+#define UA_C 0x07
 
 volatile int STOP=FALSE;
 
@@ -79,8 +81,8 @@ int main(int argc, char** argv)
     unsigned char SET[5];
 
     SET[0] = FLAG;
-    SET[1] = A;
-    SET[2] = C;
+    SET[1] = EMIT_A;
+    SET[2] = SET_C;
     SET[3] = SET[1]^SET[2];
     SET[4] = FLAG;
 
@@ -89,6 +91,55 @@ int main(int argc, char** argv)
     while(writtenBytes < 5) {
       writtenBytes += write(fd,SET + writtenBytes, 6 - writtenBytes);
     }
+
+    // Setup receiving SET message
+    unsigned char byte;
+
+    enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
+    enum set_states state = START;
+
+    while (state != END) {
+      read(fd, &byte, 1);
+
+      switch(state) {
+        case START:
+          if (byte == FLAG)
+            state = FLAG_REC;
+        break;
+        case FLAG_REC:
+          if (byte == REC_A)
+            state = A_REC;
+          else if (byte != FLAG)
+            state = START;
+        break;
+        case A_REC:
+          if (byte == UA_C)
+            state = C_REC;
+          else if (byte == FLAG)
+            state = FLAG_REC;
+          else
+            state = START;
+        break;
+        case C_REC:
+          if ((A^C) == byte)
+            state = BCC_OK;
+          else if (byte == FLAG)
+            state = FLAG_REC;
+          else
+            state = START;
+        break;
+        case BCC_OK:
+          if (byte == FLAG)
+            state = END;
+          else
+            state = START;
+        break;
+        case END:
+          break;
+      }
+    }
+
+    printf("UA Command received\n");
 
     /*
     gets(buf);
