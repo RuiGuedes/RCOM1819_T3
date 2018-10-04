@@ -3,15 +3,19 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-//#include <termios.h>
+#include <termios.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <unistd.h>
+#include <unistd.h>
 
 #define FLAG    0x7E
+
 #define EMIT_A  0x03
+#define REC_A  0x01
+
 #define SET_C   0x03
+#define UA_C   0x07
 
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
@@ -138,6 +142,21 @@ int main(int argc, char** argv)
     }
 
     printf("SET Command received\n");
+
+    // SEND UA COMMAND
+    unsigned char UA[5];
+
+    UA[0] = FLAG;
+    UA[1] = REC_A;
+    UA[2] = UA_C;
+    UA[3] = UA[1]^UA[2];
+    UA[4] = FLAG;
+
+    int writtenBytes = 0;
+
+    while(writtenBytes < 5) {
+      writtenBytes += write(fd,UA + writtenBytes, 6 - writtenBytes);
+    }
 
     tcsetattr(fd,TCSANOW,&oldtio);
     close(fd);
