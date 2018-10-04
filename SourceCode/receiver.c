@@ -5,6 +5,13 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#define FLAG    0x7E
+#define EMIT_A       0x03
+#define SET_C       0x07
 
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
@@ -15,7 +22,7 @@ volatile int STOP=FALSE;
 
 int main(int argc, char** argv)
 {
-    int fd,c, res;
+    int fd;
     struct termios oldtio,newtio;
     char buf[255];
 
@@ -70,20 +77,68 @@ int main(int argc, char** argv)
 
     printf("New termios structure set\n");
 
+
+// TEST CODE
+/*
     int i = 0;
     do {
       read(fd, buf + i, 1);
     } while (buf[i++] != '\0');
 
     printf("%s\n", buf);
-
-
-
+*/
   /* 
     O ciclo WHILE deve ser alterado de modo a respeitar o indicado no gui�o 
   */
 
+    // Setup receiving SET message
+    unsigned char byte[8];
 
+    enum set_states = {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
+    enum set_states state = START;
+
+    while (state != END) {
+
+      for (int i = 0; i < 8; i++)
+        read(fd, byte + i, 1);
+
+      switch(state) {
+        case START:
+          if (byte == FLAG)
+            state = FLAG_REC        
+        break;
+        case FLAG_REC:
+          if (byte == EMIT_A)
+            state = A_REC;
+          else if (byte != FLAG)
+            state = START;
+        break;
+        case A_REC:
+          if (byte == SET_C)
+            state = C_REC;
+          else if (byte == FLAG)
+            state = FLAG_REC;
+          else
+            state = START;
+        break;
+        case C_REC:
+          if (A^C == byte)
+            state = BCC_OK;
+          else if (byte == FLAG)
+            state = FLAG_REC;
+          else
+            state = START;
+        break;
+        case BCC_OK:
+          if (byte == FLAG)
+            state = END;
+          else
+            state = START;
+        break;
+      }
+    }
+
+    printf("SET Command received\n");
 
     tcsetattr(fd,TCSANOW,&oldtio);
     close(fd);
