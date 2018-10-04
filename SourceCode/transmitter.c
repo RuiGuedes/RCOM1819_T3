@@ -121,7 +121,7 @@ int main(int argc, char** argv)
             state = START;
         break;
         case C_REC:
-          if ((A^C) == byte)
+          if ((REC_A^UA_C) == byte)
             state = BCC_OK;
           else if (byte == FLAG)
             state = FLAG_REC;
