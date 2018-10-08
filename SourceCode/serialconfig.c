@@ -13,14 +13,12 @@ int init_serial_n_canon(char* serialpath) {
   int fd;
   struct termios newtio;
 
-  volatile int STOP=FALSE;
-
   /*
     Open serial port device for reading and writing and not as controlling tty
     because we don't want to get killed if linenoise sends CTRL-C.
   */
   fd = open(serialpath, O_RDWR | O_NOCTTY );
-  if (fd <0) {perror(serialpath); exit(-1); }
+  if (fd <0) { perror(serialpath); exit(-1); }
 
   if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */
     perror("tcgetattr(new)");
@@ -53,6 +51,17 @@ int init_serial_n_canon(char* serialpath) {
   printf("New termios structure set\n");
 
   return fd;
+}
+
+void write_serial(int fd, unsigned char* buffer, int length) {
+  int writtenBytes = 0;
+
+  while(writtenBytes < length)
+    writtenBytes += write(fd, buffer + writtenBytes, length + 1 - writtenBytes);
+}
+
+void read_serial(int fd, unsigned char* buffer, int length) {
+  read(fd, buffer, length);
 }
 
 void close_serial(int fd, int wait_time) {

@@ -1,6 +1,6 @@
 // ALL SERIAL PORT RELATED STUFF
-#ifndef _SERIAL_CONFIG
-#define _SERIAL_CONFIG
+#ifndef SERIAL_CONFIG_H
+#define SERIAL_CONFIG_H
 
 #include <termios.h>
 
@@ -17,6 +17,24 @@ struct termios oldtio; // Original configuration
   Return: file descriptor  of serial port
 */
 int init_serial_n_canon(char* serialpath);
+
+/*
+  Writes to serial port
+
+  Argument 'fd': file descriptor of serial port
+  Argument 'buffer': buffer to be transmitted
+  Argument 'length': length of the buffer (in bytes)
+*/
+void write_serial(int fd, unsigned char* buffer, int length);
+
+/*
+  Reads from serial port
+
+  Argument 'fd': file descriptor of serial port
+  Argument 'buffer': buffer to store received bytes
+  Argument 'length': number of bytes to be received (and stored in buffer)
+*/
+void read_serial(int fd, unsigned char* buffer, int length);
 
 /*
   Closes the serial port, setting it back to original configuration
