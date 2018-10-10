@@ -1,6 +1,11 @@
 #include "datalink.h"
 #include "serialconfig.h"
 
+// Global variables
+
+int flag = 1;
+int attempts = 1;
+
 void send_control_frame(int fd, int addr_byte, int ctrl_byte) {
   unsigned char frame[CTRL_FRAME_LEN];
 
@@ -13,7 +18,7 @@ void send_control_frame(int fd, int addr_byte, int ctrl_byte) {
   write_serial(fd, frame, CTRL_FRAME_LEN);
 }
 
-void receive_control_frame(int fd, int addr_byte, int ctrl_byte) {
+int receive_control_frame(int fd, int addr_byte, int ctrl_byte) {
   unsigned char byte;
   int bbc_byte = addr_byte ^ ctrl_byte;
 
@@ -21,6 +26,9 @@ void receive_control_frame(int fd, int addr_byte, int ctrl_byte) {
   enum set_states state = START;
 
   while (state != END) {
+    if(flag)
+      return INSUCCESS;
+
     read_serial(fd, &byte, 1);
 
     switch(state) {
@@ -49,4 +57,5 @@ void receive_control_frame(int fd, int addr_byte, int ctrl_byte) {
         break;
     }
   }
+  return SUCCESS;
 }

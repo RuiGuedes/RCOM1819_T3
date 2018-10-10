@@ -5,7 +5,6 @@
 #define TRANSMITTER 0
 #define RECEIVER    1
 
-
 #define FLAG      0x7
 
 #define TRANS_A   0x03 // Transmitter commands and Receiver responses
@@ -17,10 +16,18 @@
 // List of Responses
 #define UA_C      0x07
 
+// List of Responses
+#define SUCCESS   1
+#define INSUCCESS 0
+
 
 // FRAME SEND AND RECEIVER FUNCTIONS
 
 #define CTRL_FRAME_LEN   5 // Length of the control frame (in bytes)
+
+// Global variables
+
+extern int flag, attempts;
 
 /* Send Supervision or Unnumbered frames
 
@@ -38,6 +45,6 @@ void send_control_frame(int fd, int addr_byte, int ctrl_byte);
 
   TODO argument to define timeout time
 */
-void receive_control_frame(int fd, int addr_byte, int ctrl_byte);
+int receive_control_frame(int fd, int addr_byte, int ctrl_byte);
 
 #endif

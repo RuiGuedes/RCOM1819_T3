@@ -1,7 +1,21 @@
+CC = gcc
+CFLAGS = -Wall
+DEPS = datalink.h serialconfig.h
+TRANSMITTER_OBJ = transmitter.o serialconfig.o datalink.o
+RECEIVER_OBJ = receiver.o serialconfig.o datalink.o
+
 all: transmitter receiver
 
-transmitter: transmitter.c datalink.h serialconfig.h
-	gcc -o transmitter transmitter.c datalink.c serialconfig.c -Wall
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
-receiver: receiver.c datalink.h serialconfig.h
-	gcc -o receiver receiver.c datalink.c serialconfig.c -Wall
+
+transmitter: $(TRANSMITTER_OBJ)
+	$(CC) -o $@ $^ $(CFLAGS) 
+
+receiver:  $(RECEIVER_OBJ)
+	$(CC) -o $@ $^ $(CFLAGS)
+
+clean: 	
+	rm -f transmitter receiver
+	rm -f $(OBJ) *.o 
