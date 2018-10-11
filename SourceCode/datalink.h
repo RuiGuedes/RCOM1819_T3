@@ -36,8 +36,7 @@
 
 // Global variables
 
-extern int flag, attempts;
-int DATA_C = DATA_C1;
+extern int flag, attempts, DATA_C;
 
 void llwrite(int fd, char * buffer, int length);
 void send_data_frame(int fd, char * buffer, int length);
