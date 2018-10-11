@@ -40,6 +40,8 @@ int main(int argc, char** argv)
       printf("UA Command received\n");
       break;
     }
+    else
+      printf("UA Command not received. Attempting to reconnect.\n");
 
   }
 
