@@ -40,7 +40,8 @@ extern int flag, attempts, DATA_C;
 
 void llwrite(int fd, char * buffer, int length);
 void send_data_frame(int fd, char * buffer, int length);
-int receive_data_frame(int fd, int addr_byte, int ctrl_byte);
+int receive_data_frame(int fd, int length);
+int llread(int fd, char* buffer, int length);
 
 /* Send Supervision or Unnumbered frames
 
