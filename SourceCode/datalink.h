@@ -12,11 +12,19 @@
 
 // List of Commands
 #define SET_C     0x03
+#define DATA_C1   0x40
+#define DATA_C0   0x00
+
 
 // List of Responses
-#define UA_C      0x07
+#define UA_C        0x07
+#define RR_C0       0x05
+#define RR_C1       0x85
+#define REJ_C0      0x01
+#define REJ_C1      0x81
 
-// List of Responses
+
+// List of returns
 #define SUCCESS   1
 #define INSUCCESS 0
 
@@ -24,10 +32,16 @@
 // FRAME SEND AND RECEIVER FUNCTIONS
 
 #define CTRL_FRAME_LEN   5 // Length of the control frame (in bytes)
+#define DATA_FRAME_LEN   6 // Length of the data frame (in bytes)
 
 // Global variables
 
 extern int flag, attempts;
+int DATA_C = DATA_C1;
+
+void llwrite(int fd, char * buffer, int length);
+void send_data_frame(int fd, char * buffer, int length);
+int receive_data_frame(int fd, int addr_byte, int ctrl_byte);
 
 /* Send Supervision or Unnumbered frames
 
