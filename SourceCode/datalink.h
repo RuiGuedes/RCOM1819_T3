@@ -72,7 +72,8 @@ int llwrite(int fd, char * buffer, int length);
 */
 int send_data_frame(int fd, char * buffer, int length);
 
-int llread(int fd, char* buffer, int length);
+int llread(int fd, char* buffer);
+
 int receive_data_frame(int fd, int addr_byte, int ctrl_byte);
 
 #endif
