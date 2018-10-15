@@ -42,6 +42,12 @@ void llwrite(int fd, char * buffer, int length);
 void send_data_frame(int fd, char * buffer, int length);
 int receive_data_frame(int fd, int addr_byte, int ctrl_byte);
 
+
+/*
+
+*/
+int llopen(int port, int user);
+
 /* Send Supervision or Unnumbered frames
 
   Argument 'fd': File descriptor of the serial port
