@@ -77,6 +77,30 @@ void llwrite(int fd, char * buffer, int length) {
   // TIMEOUT
 
 }
+/*
+int llread(int fd, char* buffer, int length){
+
+  int done = 0;
+  int numBytes = 0;
+   while(!done) {
+    //int messageReaction = receive_data_frame(fd, length);
+    numBytes++;
+     switch(messageReaction){
+
+      //INVALID
+      case INSUCCESS:
+        printf("INVALID MESSAGE\n");
+        return -1;
+      break;
+       //VALID
+      case SUCCESS:
+        printf("SUCCESS!\n");
+      break;
+     }
+  }
+   return numBytes;
+}
+*/
 
 void send_data_frame(int fd, char * buffer, int length) {
   unsigned char frame[DATA_FRAME_LEN + length], bbc2 = 0;
@@ -98,28 +122,16 @@ void send_data_frame(int fd, char * buffer, int length) {
   write_serial(fd, frame, DATA_FRAME_LEN + length);
 }
 
-int processBCC(const unsigned char* buf, int size){
-  unsigned char BCC = 0;
-  int i;
-  
-  for(i = 0; i < size; i++){
-    BCC ^= buf[i];
-  }
+int receive_data_frame(int fd, int addr_byte, int ctrl_byte) {
+  unsigned char byte, bbc2 = 0;
+  unsigned char bbc_byte = addr_byte ^ ctrl_byte;
+//  unsigned char message[255];
+//  int i = 0;
 
-  return BCC;
-}
-
-int receive_data_frame(int fd, int length) {
-  unsigned char byte;
-  unsigned char message[255];
-  int i = 0;
-
-  enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
+  enum set_states {START, FLAG_REC, A_REC, C_REC, DATA_REC, BCC_OK, END};
   enum set_states state = START;
 
   while (state != END) {
-    if(flag)
-    return INSUCCESS;
 
     read_serial(fd, &byte, 1);
 
@@ -157,6 +169,7 @@ int receive_data_frame(int fd, int length) {
     }
   }
 
+  /*
   unsigned char A = message[1];
   unsigned char C = message[2];
   unsigned char BCC1 = message[3];
@@ -172,7 +185,7 @@ int receive_data_frame(int fd, int length) {
   if(processedBCC2 != BCC2){
     printf("ERROR! Invalid BCC2!\n");
     return INSUCCESS;
-  }
+  }*/
 
   return SUCCESS;
 }
