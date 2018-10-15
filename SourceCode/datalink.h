@@ -38,16 +38,11 @@
 
 extern int flag, attempts, DATA_C;
 
-void llwrite(int fd, char * buffer, int length);
-void send_data_frame(int fd, char * buffer, int length);
-int receive_data_frame(int fd, int addr_byte, int ctrl_byte);
-int llread(int fd, char* buffer, int length);
-
-
 /*
 
 */
 int llopen(int port, int user);
+
 
 /* Send Supervision or Unnumbered frames
 
@@ -66,5 +61,18 @@ void send_control_frame(int fd, int addr_byte, int ctrl_byte);
   TODO argument to define timeout time
 */
 int receive_control_frame(int fd, int addr_byte, int ctrl_byte);
+
+/*
+
+*/
+int llwrite(int fd, char * buffer, int length);
+
+/*
+
+*/
+int send_data_frame(int fd, char * buffer, int length);
+
+int llread(int fd, char* buffer, int length);
+int receive_data_frame(int fd, int addr_byte, int ctrl_byte);
 
 #endif

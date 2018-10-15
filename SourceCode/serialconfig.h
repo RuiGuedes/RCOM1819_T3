@@ -25,7 +25,7 @@ int init_serial_n_canon(char* serialpath);
   Argument 'buffer': buffer to be transmitted
   Argument 'length': length of the buffer (in bytes)
 */
-void write_serial(int fd, unsigned char* buffer, int length);
+int write_serial(int fd, unsigned char* buffer, int length);
 
 /*
   Reads from serial port

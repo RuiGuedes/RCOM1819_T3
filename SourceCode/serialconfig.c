@@ -14,8 +14,8 @@ int init_serial_n_canon(char* serialpath) {
   struct termios newtio;
 
   /*
-    Open serial port device for reading and writing and not as controlling tty
-    because we don't want to get killed if linenoise sends CTRL-C.
+  Open serial port device for reading and writing and not as controlling tty
+  because we don't want to get killed if linenoise sends CTRL-C.
   */
   fd = open(serialpath, O_RDWR | O_NOCTTY );
   if (fd <0) { perror(serialpath); exit(-1); }
@@ -37,8 +37,8 @@ int init_serial_n_canon(char* serialpath) {
   newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 chars received */
 
   /*
-    VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
-    leitura do(s) proximo(s) caracter(es)
+  VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
+  leitura do(s) proximo(s) caracter(es)
   */
 
   tcflush(fd, TCIOFLUSH);
@@ -53,11 +53,13 @@ int init_serial_n_canon(char* serialpath) {
   return fd;
 }
 
-void write_serial(int fd, unsigned char* buffer, int length) {
+int write_serial(int fd, unsigned char* buffer, int length) {
   int writtenBytes = 0;
 
   while(writtenBytes < length)
     writtenBytes += write(fd, buffer + writtenBytes, length + 1 - writtenBytes);
+
+  return writtenBytes;
 }
 
 void read_serial(int fd, unsigned char* buffer, int length) {
