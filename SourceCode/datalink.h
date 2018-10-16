@@ -53,15 +53,10 @@ int llopen(int port, int user);
 */
 void send_control_frame(int fd, int addr_byte, int ctrl_byte);
 
-/* Send Supervision or Unnumbered frames
-
-  Argument 'fd': File descriptor of the serial port
-  Argument 'addr_byte': Address byte expected to be received (TRANS_A | REC_A)
-  Argument 'ctrl_byte': Control byte expected to be received (SET_C | UA_C)
+/*
 
 */
-//int receive_control_frame(int fd, int addr_byte, int ctrl_byte);
-int receive_control_frame(int fd, int addr_byte);
+unsigned char receive_control_frame(int fd, int addr_byte);
 /*
 
 */

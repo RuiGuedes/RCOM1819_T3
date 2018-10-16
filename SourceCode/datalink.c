@@ -34,6 +34,7 @@ int llopen(int port, int user) {
     while(attempts < 4) {
       // Send SET command
       send_control_frame(port, TRANS_A, SET_C);
+      printf("SET command sent\n");
 
       // Set alarm for 3 seconds
       if(flag){
@@ -41,46 +42,38 @@ int llopen(int port, int user) {
         flag=0;
       }
 
-      /*
       // Setup receiving UA message
-      if(receive_control_frame(port, REC_A, UA_C) == SUCCESS) {
-        printf("UA Command received\n");
-        break;
-      }
-      else
-      printf("UA Command not received. Attempting to reconnect.\n");
-      */
       if(receive_control_frame(port, REC_A) ==  UA_C) {
         printf("UA Command received\n");
         break;
       }
-      else
-      printf("UA Command not received. Attempting to reconnect.\n");
+      else {
+        printf("UA Command not received. Attempting to reconnect.\n");
+      }
     }
 
-    if(attempts >= 4)
-    printf("UA Command not received\n");
+    if(attempts >= 4) {
+      printf("UA Command not received\n");
+    }
   }
   else if(user == RECEIVER) {
     //Reset alarm FLAG
     flag = 0;
 
-    unsigned char var = 0;
-
-    while(var != SET_C) {
-      receive_control_frame(port, TRANS_A);
-    }
     // Setup receiving SET message
+    while(receive_control_frame(port, TRANS_A) != SET_C) {
+    }
 
-  //  receive_control_frame(port, TRANS_A, SET_C);
     printf("SET Command received\n");
 
     // Send UA response
     send_control_frame(port, REC_A, UA_C);
-  }
-  else
-  return INSUCCESS;
+    printf("UA Command sent\n");
 
+  }
+  else {
+    return INSUCCESS;
+  }
 
   return SUCCESS;
 }
@@ -96,50 +89,8 @@ void send_control_frame(int fd, int addr_byte, int ctrl_byte) {
 
   write_serial(fd, frame, CTRL_FRAME_LEN);
 }
-/*
-int receive_control_frame(int fd, int addr_byte, int ctrl_byte) {
-  unsigned char byte;
-  unsigned char bbc_byte = addr_byte ^ ctrl_byte;
 
-  enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
-  enum set_states state = START;
-
-  while (state != END) {
-    if(flag)
-    return INSUCCESS;
-
-    read_serial(fd, &byte, 1);
-
-    switch(state) {
-      case START:
-      if      (byte == FLAG)        state = FLAG_REC;
-      break;
-      case FLAG_REC:
-      if      (byte == addr_byte)   state = A_REC;
-      else if (byte != FLAG)        state = START;
-      break;
-      case A_REC:
-      if      (byte == ctrl_byte)   state = C_REC;
-      else if (byte == FLAG)        state = FLAG_REC;
-      else                          state = START;
-      break;
-      case C_REC:
-      if      (byte == bbc_byte)    state = BCC_OK;
-      else if (byte == FLAG)        state = FLAG_REC;
-      else                          state = START;
-      break;
-      case BCC_OK:
-      if      (byte == FLAG)        state = END;
-      else                          state = START;
-      break;
-      case END:
-      break;
-    }
-  }
-  return SUCCESS;
-}
-*/
-int receive_control_frame(int fd, int addr_byte) {
+unsigned char receive_control_frame(int fd, int addr_byte) {
   unsigned char byte, ctrl_byte;
 
   enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
@@ -231,14 +182,14 @@ int llwrite(int fd, char * buffer, int length) {
     /*
     // Setup receiving response message
     if(receive_control_frame(fd, TRANS_A, UA_C) == SUCCESS) {
-      printf("UA Command received\n");
-      break;
-    }
-    else
-    printf("UA Command not received. Attempting to reconnect.\n");*/
+    printf("UA Command received\n");
+    break;
   }
+  else
+  printf("UA Command not received. Attempting to reconnect.\n");*/
+}
 
-  return num_written_bytes;
+return num_written_bytes;
 }
 
 int send_data_frame(int fd, char * buffer, int length) {
