@@ -162,7 +162,7 @@ unsigned char receive_control_frame(int fd, int addr_byte) {
 
 int llwrite(int fd, char * buffer, int length) {
   // Local variables
-  int num_written_bytes = 0;
+  int num_written_bytes = -1;
 
   // Reset global variables
   attempts = 1;
@@ -170,7 +170,7 @@ int llwrite(int fd, char * buffer, int length) {
 
   while(attempts < 4) {
     // Send data frame
-    int num_written_bytes = send_data_frame(fd, buffer, length);
+    num_written_bytes = send_data_frame(fd, buffer, length);
 
     // Set alarm for 3 seconds
     if(flag){
@@ -179,18 +179,18 @@ int llwrite(int fd, char * buffer, int length) {
     }
 
     //Check for receiver response
-    unsigned char command = receive_control_frame(fd, TRANS_A);
+    unsigned char command = receive_control_frame(fd, REC_A);
 
-    // Manage receiver response
     if((command == RR_C0) || (command == RR_C1)) {
-      printf("Receiver ready OK\n");
+      DATA_C = DATA_C == DATA_C0 ? DATA_C1 : DATA_C0;
+      printf("Receiver ready. Data transmitted.\n");
       break;
     }
     else if((command == REJ_C0) || (command == REJ_C1)) {
-      printf("Retransmission needed\n");
+      printf("Receveir reject. Retransmitting data.\n");
     }
     else {
-      printf("Command not received. Attempting to transmitte again.\n");
+      printf("Command not received. Attempting to retransmitte data.\n");
     }
 
   }
@@ -236,7 +236,7 @@ int llread(int fd, char* buffer) {
   return SUCCESS;
 }
 
-
+//TODO: Fix details on this function
 int receive_data_frame(int fd) {
   unsigned int index = 0;
   unsigned char byte, ctrl_byte, bbc2 = 0;
