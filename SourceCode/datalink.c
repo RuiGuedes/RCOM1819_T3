@@ -179,17 +179,25 @@ int llwrite(int fd, char * buffer, int length) {
       alarm(3);
       flag=0;
     }
-    /*
-    // Setup receiving response message
-    if(receive_control_frame(fd, TRANS_A, UA_C) == SUCCESS) {
-    printf("UA Command received\n");
-    break;
-  }
-  else
-  printf("UA Command not received. Attempting to reconnect.\n");*/
-}
 
-return num_written_bytes;
+    //Check for receiver response
+    unsigned char command = receive_control_frame(fd, TRANS_A);
+
+    // Manage receiver response
+    if((command == RR_C0) || (command == RR_C1)) {
+      printf("Receiver ready OK\n");
+      break;
+    }
+    else if((command == REJ_C0) || (command == REJ_C1)) {
+      printf("Retransmission needed\n");
+    }
+    else {
+      printf("Command not received. Attempting to transmitte again.\n");
+    }
+
+  }
+
+  return num_written_bytes;
 }
 
 int send_data_frame(int fd, char * buffer, int length) {
@@ -219,21 +227,21 @@ int send_data_frame(int fd, char * buffer, int length) {
 
 int llread(int fd, char* buffer) {
   // Reset DATA_C variable
-  DATA_C = DATA_C0;
+  DATA_C = DATA_C == 0 ? DATA_C1 : DATA_C0;
 
-  int readBytes = receive_data_frame(fd);
-  printf("Message read\n");
+  buffer = receive_data_frame(fd);
+  printf("Message read %s\n", buffer);
 
-  return readBytes;
+  return 1;
 }
 
 
-int receive_data_frame(int fd) {
+char * receive_data_frame(int fd) {
   unsigned int index = 0;
   unsigned char byte, ctrl_byte, bbc2 = 0;
   unsigned char data[255];
 
-  enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, DATA_REC, END};
+  enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
   enum set_states state = START;
 
   while (state != END) {
@@ -247,10 +255,12 @@ int receive_data_frame(int fd) {
       }
       break;
       case FLAG_REC:
-      if(byte == TRANS_A)
-      state = A_REC;
-      else if (byte != FLAG)
-      state = START;
+      if(byte == TRANS_A) {
+        state = A_REC;
+      }
+      else if (byte != FLAG) {
+        state = START;
+      }
       break;
       case A_REC:
       if((DATA_C == DATA_C0 && byte == DATA_C0) || (DATA_C == DATA_C1 && byte == DATA_C1)) {
@@ -259,44 +269,52 @@ int receive_data_frame(int fd) {
         state = C_REC;
       }
       else if((DATA_C == DATA_C1 && byte == DATA_C0) || (DATA_C == DATA_C0 && byte == DATA_C1)) {
-        //TODO: Caso de retransmissão: envia comando RR
+        send_control_frame(fd, REC_A, byte == DATA_C0 ? RR_C0 : RR_C1);
         state = END;
       }
-      else if(byte == FLAG)
-      state = FLAG_REC;
-      else
-      state = START;
+      else if(byte == FLAG){
+        state = FLAG_REC;
+      }
+      else {
+        state = START;
+      }
       break;
       case C_REC:
-      if(byte == (TRANS_A^ctrl_byte))
-      state = BCC_OK;
-      else if(byte == FLAG)
-      state = FLAG_REC;
-      else
-      state = START;
+      if(byte == (TRANS_A^ctrl_byte)) {
+        state = BCC_OK;
+      }
+      else if(byte == FLAG) {
+        state = FLAG_REC;
+      }
+      else {
+        state = START;
+      }
       break;
       case BCC_OK:
-      if(byte == FLAG)
-      state = DATA_REC;
-      else if((byte^bbc2) == 0)
-      state = DATA_REC;
+      if(byte == FLAG) {
+        state = END;
+      }
       else {
         bbc2 ^= byte;
         data[index++] = byte;
       }
-      break;
-      case DATA_REC:
-      if(byte == FLAG)
-      state = END;
-      else
-      state = START;
       break;
       case END:
       break;
     }
   }
 
-  return index;
+  //TODO: check bbc2 status
+  if(bbc2 == 0) {
+    send_control_frame(fd, REC_A, DATA_C == DATA_C0 ? RR_C0 : RR_C1);
+    DATA_C = DATA_C == DATA_C0 ? DATA_C1 : DATA_C0;
+  }
+  else {
+    send_control_frame(fd, REC_A, DATA_C == DATA_C0 ? REJ_C0 : REJ_C1);
+    return NULL;
+  }
+
+  return data;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -69,6 +69,6 @@ int send_data_frame(int fd, char * buffer, int length);
 
 int llread(int fd, char* buffer);
 
-int receive_data_frame(int fd);
+char * receive_data_frame(int fd);
 
 #endif

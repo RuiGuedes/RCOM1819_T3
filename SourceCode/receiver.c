@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 
   llopen(port, RECEIVER);
 
-  //  llread(port, buffer);
+  llread(port, buffer);
 
   close_serial(port, 2);
 
