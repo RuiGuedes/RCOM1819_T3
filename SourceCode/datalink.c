@@ -8,11 +8,13 @@
 #include "serialconfig.h"
 #include <stdio.h>
 
-// Init extern global variables
+// Init global variables
 
+int userType;
 int flag = 1;
 int attempts = 1;
 int DATA_C = DATA_C1;
+unsigned char data[255];
 
 /*
 Manages alarm interruptions
@@ -27,8 +29,10 @@ void manage_alarm() {
 ////////////////////////////////////////////////////////////////////////////////
 
 int llopen(int port, int user) {
+  userType = user;
 
-  if(user == TRANSMITTER) {
+  if(userType == TRANSMITTER) {
+    //Manage alarm interruptions
     (void) signal(SIGALRM, manage_alarm);
 
     while(attempts < 4) {
@@ -56,10 +60,7 @@ int llopen(int port, int user) {
       printf("UA Command not received\n");
     }
   }
-  else if(user == RECEIVER) {
-    //Reset alarm FLAG
-    flag = 0;
-
+  else if(userType == RECEIVER) {
     // Setup receiving SET message
     while(receive_control_frame(port, TRANS_A) != SET_C) {
     }
@@ -69,7 +70,6 @@ int llopen(int port, int user) {
     // Send UA response
     send_control_frame(port, REC_A, UA_C);
     printf("UA Command sent\n");
-
   }
   else {
     return INSUCCESS;
@@ -97,8 +97,9 @@ unsigned char receive_control_frame(int fd, int addr_byte) {
   enum set_states state = START;
 
   while (state != END) {
-    if(flag)
-    return INSUCCESS;
+    if(flag && (userType == TRANSMITTER)) {
+      return INSUCCESS;
+    }
 
     read_serial(fd, &byte, 1);
 
@@ -167,9 +168,6 @@ int llwrite(int fd, char * buffer, int length) {
   attempts = 1;
   flag = 1;
 
-  //Manage alarm interruptions
-  (void) signal(SIGALRM, manage_alarm);
-
   while(attempts < 4) {
     // Send data frame
     int num_written_bytes = send_data_frame(fd, buffer, length);
@@ -229,17 +227,19 @@ int llread(int fd, char* buffer) {
   // Reset DATA_C variable
   DATA_C = DATA_C == 0 ? DATA_C1 : DATA_C0;
 
-  buffer = receive_data_frame(fd);
+  receive_data_frame(fd);
+
+  buffer = data;
+
   printf("Message read %s\n", buffer);
 
-  return 1;
+  return SUCCESS;
 }
 
 
-char * receive_data_frame(int fd) {
+int receive_data_frame(int fd) {
   unsigned int index = 0;
   unsigned char byte, ctrl_byte, bbc2 = 0;
-  unsigned char data[255];
 
   enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
   enum set_states state = START;
@@ -304,17 +304,17 @@ char * receive_data_frame(int fd) {
     }
   }
 
-  //TODO: check bbc2 status
+  // Check BBC2 status
   if(bbc2 == 0) {
     send_control_frame(fd, REC_A, DATA_C == DATA_C0 ? RR_C0 : RR_C1);
     DATA_C = DATA_C == DATA_C0 ? DATA_C1 : DATA_C0;
   }
   else {
     send_control_frame(fd, REC_A, DATA_C == DATA_C0 ? REJ_C0 : REJ_C1);
-    return NULL;
+    return INSUCCESS;
   }
 
-  return data;
+  return SUCCESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
