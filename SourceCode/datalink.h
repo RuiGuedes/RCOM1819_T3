@@ -12,6 +12,7 @@
 
 // List of Commands
 #define SET_C     0x03
+#define DISC_C    0x0B
 #define DATA_C1   0x40
 #define DATA_C0   0x00
 
@@ -58,10 +59,9 @@ void send_control_frame(int fd, int addr_byte, int ctrl_byte);
   Argument 'addr_byte': Address byte expected to be received (TRANS_A | REC_A)
   Argument 'ctrl_byte': Control byte expected to be received (SET_C | UA_C)
 
-  TODO argument to define timeout time
 */
-int receive_control_frame(int fd, int addr_byte, int ctrl_byte);
-
+//int receive_control_frame(int fd, int addr_byte, int ctrl_byte);
+int receive_control_frame(int fd, int addr_byte);
 /*
 
 */
@@ -74,6 +74,6 @@ int send_data_frame(int fd, char * buffer, int length);
 
 int llread(int fd, char* buffer);
 
-int receive_data_frame(int fd, int addr_byte, int ctrl_byte);
+int receive_data_frame(int fd);
 
 #endif

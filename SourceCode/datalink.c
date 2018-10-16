@@ -41,8 +41,16 @@ int llopen(int port, int user) {
         flag=0;
       }
 
+      /*
       // Setup receiving UA message
-      if(receive_control_frame(port, TRANS_A, UA_C) == SUCCESS) {
+      if(receive_control_frame(port, REC_A, UA_C) == SUCCESS) {
+        printf("UA Command received\n");
+        break;
+      }
+      else
+      printf("UA Command not received. Attempting to reconnect.\n");
+      */
+      if(receive_control_frame(port, REC_A) ==  UA_C) {
         printf("UA Command received\n");
         break;
       }
@@ -57,17 +65,22 @@ int llopen(int port, int user) {
     //Reset alarm FLAG
     flag = 0;
 
+    unsigned char var = 0;
+
+    while(var != SET_C) {
+      receive_control_frame(port, TRANS_A);
+    }
     // Setup receiving SET message
-    receive_control_frame(port, TRANS_A, SET_C);
+
+  //  receive_control_frame(port, TRANS_A, SET_C);
     printf("SET Command received\n");
 
     // Send UA response
-    send_control_frame(port, TRANS_A, UA_C);
+    send_control_frame(port, REC_A, UA_C);
   }
   else
   return INSUCCESS;
 
-  close_serial(port, 2);
 
   return SUCCESS;
 }
@@ -83,7 +96,7 @@ void send_control_frame(int fd, int addr_byte, int ctrl_byte) {
 
   write_serial(fd, frame, CTRL_FRAME_LEN);
 }
-
+/*
 int receive_control_frame(int fd, int addr_byte, int ctrl_byte) {
   unsigned char byte;
   unsigned char bbc_byte = addr_byte ^ ctrl_byte;
@@ -125,16 +138,105 @@ int receive_control_frame(int fd, int addr_byte, int ctrl_byte) {
   }
   return SUCCESS;
 }
+*/
+int receive_control_frame(int fd, int addr_byte) {
+  unsigned char byte, ctrl_byte;
+
+  enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
+  enum set_states state = START;
+
+  while (state != END) {
+    if(flag)
+    return INSUCCESS;
+
+    read_serial(fd, &byte, 1);
+
+    switch(state) {
+      case START:
+      if(byte == FLAG) {
+        state = FLAG_REC;
+      }
+      break;
+      case FLAG_REC:
+      if(byte == addr_byte) {
+        state = A_REC;
+      }
+      else if(byte != FLAG) {
+        state = START;
+      }
+      break;
+      case A_REC:
+      if((byte == SET_C) || (byte == DISC_C) || (byte == UA_C) || (byte == RR_C0) || (byte == RR_C1) || (byte == REJ_C0) || (byte == REJ_C1)) {
+        ctrl_byte = byte;
+        state = C_REC;
+      }
+      else if (byte == FLAG) {
+        state = FLAG_REC;
+      }
+      else {
+        state = START;
+      }
+      break;
+      case C_REC:
+      if(byte == (addr_byte^ctrl_byte)) {
+        state = BCC_OK;
+      }
+      else if (byte == FLAG) {
+        state = FLAG_REC;
+      }
+      else {
+        state = START;
+      }
+      break;
+      case BCC_OK:
+      if(byte == FLAG){
+        state = END;
+      }
+      else {
+        state = START;
+      }
+      break;
+      case END:
+      break;
+    }
+  }
+
+  return ctrl_byte;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Data Transmission - Transmitter //////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 int llwrite(int fd, char * buffer, int length) {
+  // Local variables
+  int num_written_bytes = 0;
 
-  //TODO: implementar TIMEOUT e retransmissão com analise da resposta (RR ou RJ)
+  // Reset global variables
+  attempts = 1;
+  flag = 1;
 
-  int num_written_bytes = send_data_frame(fd, buffer, length);
+  //Manage alarm interruptions
+  (void) signal(SIGALRM, manage_alarm);
+
+  while(attempts < 4) {
+    // Send data frame
+    int num_written_bytes = send_data_frame(fd, buffer, length);
+
+    // Set alarm for 3 seconds
+    if(flag){
+      alarm(3);
+      flag=0;
+    }
+    /*
+    // Setup receiving response message
+    if(receive_control_frame(fd, TRANS_A, UA_C) == SUCCESS) {
+      printf("UA Command received\n");
+      break;
+    }
+    else
+    printf("UA Command not received. Attempting to reconnect.\n");*/
+  }
 
   return num_written_bytes;
 }
@@ -168,35 +270,17 @@ int llread(int fd, char* buffer) {
   // Reset DATA_C variable
   DATA_C = DATA_C0;
 
+  int readBytes = receive_data_frame(fd);
+  printf("Message read\n");
 
-  /*int done = 0;
-  int numBytes = 0;
-  while(!done) {
-  //int messageReaction = receive_data_frame(fd, length);
-  numBytes++;
-  switch(messageReaction){
-
-  //INVALID
-  case INSUCCESS:
-  printf("INVALID MESSAGE\n");
-  return -1;
-  break;
-  //VALID
-  case SUCCESS:
-  printf("SUCCESS!\n");
-  break;
-}
-}
-return numBytes;*/
-return SUCCESS;
+  return readBytes;
 }
 
 
 int receive_data_frame(int fd) {
-  unsigned char byte, bbc2 = 0;
-  unsigned char ctrl_byte;
-  //  unsigned char message[255];
-  //  int i = 0;
+  unsigned int index = 0;
+  unsigned char byte, ctrl_byte, bbc2 = 0;
+  unsigned char data[255];
 
   enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, DATA_REC, END};
   enum set_states state = START;
@@ -207,14 +291,15 @@ int receive_data_frame(int fd) {
 
     switch(state) {
       case START:
-      if(byte == FLAG)
+      if(byte == FLAG) {
         state = FLAG_REC;
+      }
       break;
       case FLAG_REC:
       if(byte == TRANS_A)
-        state = A_REC;
+      state = A_REC;
       else if (byte != FLAG)
-        state = START;
+      state = START;
       break;
       case A_REC:
       if((DATA_C == DATA_C0 && byte == DATA_C0) || (DATA_C == DATA_C1 && byte == DATA_C1)) {
@@ -227,55 +312,40 @@ int receive_data_frame(int fd) {
         state = END;
       }
       else if(byte == FLAG)
-        state = FLAG_REC;
+      state = FLAG_REC;
       else
-        state = START;
+      state = START;
       break;
       case C_REC:
       if(byte == (TRANS_A^ctrl_byte))
-        state = BCC_OK;
+      state = BCC_OK;
       else if(byte == FLAG)
-        state = FLAG_REC;
+      state = FLAG_REC;
       else
-        state = START;
+      state = START;
       break;
       case BCC_OK:
       if(byte == FLAG)
-        state = DATA_REC;
-      else if(byte^bbc2 == 0)
-        state = DATA_REC;
+      state = DATA_REC;
+      else if((byte^bbc2) == 0)
+      state = DATA_REC;
       else {
         bbc2 ^= byte;
+        data[index++] = byte;
       }
       break;
       case DATA_REC:
       if(byte == FLAG)
-        state = END;
+      state = END;
       else
-        state = START;
+      state = START;
+      break;
+      case END:
       break;
     }
   }
 
-  /*
-  unsigned char A = message[1];
-  unsigned char C = message[2];
-  unsigned char BCC1 = message[3];
-
-  if(BCC1 != (A^C)){
-  printf("ERROR BCC1!\n");
-  return INSUCCESS;
-}
-
-unsigned char processedBCC2 = processBCC(&message[4], length);
-unsigned char BCC2 = message[4 + length];
-
-if(processedBCC2 != BCC2){
-printf("ERROR! Invalid BCC2!\n");
-return INSUCCESS;
-}*/
-
-return SUCCESS;
+  return index;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

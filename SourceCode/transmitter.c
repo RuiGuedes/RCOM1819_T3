@@ -20,5 +20,9 @@ int main(int argc, char** argv)
 
   llopen(port, TRANSMITTER);
 
+  //llwrite(port, "Information to be sent.", 23);
+
+  close_serial(port, 2);
+
   return 0;
 }
