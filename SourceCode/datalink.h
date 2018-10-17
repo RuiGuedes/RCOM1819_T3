@@ -38,14 +38,14 @@ extern int flag, attempts, DATA_C;
 /*
 
 */
-int llopen(int port, int user);
+int llopen(char *port, int user);
 
 /*
 
 */
 int llwrite(int fd, char * buffer, int length);
 
-int llread(int fd, char* buffer);
+int llread(int fd, unsigned char* buffer);
 
 
 // DataLink Aux Functions

@@ -16,10 +16,8 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  char buffer[255];
-  int port = init_serial_n_canon(argv[1]);
-
-  llopen(port, RECEIVER);
+  unsigned char buffer[255];
+  int port = llopen(argv[1], RECEIVER);
 
   llread(port, buffer);
 

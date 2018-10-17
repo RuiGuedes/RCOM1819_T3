@@ -33,13 +33,13 @@ int llopen(char *port, int user) {
   int fd = init_serial_n_canon(port);
 
   switch(userType) {
-    case: TRANSMITTER
+    case TRANSMITTER:
       //Manage alarm interruptions
       (void) signal(SIGALRM, manage_alarm);
 
       while (attempts < 4) {
         // Send SET command
-        send_control_frame(port, TRANS_A, SET_C);
+        send_control_frame(fd, TRANS_A, SET_C);
         printf("SET command sent\n");
 
         // Set alarm for 3 seconds
@@ -49,7 +49,7 @@ int llopen(char *port, int user) {
         }
 
         // Setup receiving UA message
-        if (receive_control_frame(port, REC_A) ==  UA_C) {
+        if (receive_control_frame(fd, REC_A) ==  UA_C) {
           printf("UA Command received\n");
           break;
         }
@@ -59,19 +59,19 @@ int llopen(char *port, int user) {
       }
 
       if (attempts >= 4)
-        printf("UA Command not received\n")
+        printf("UA Command not received\n");
       break;
-    case: RECEIVER
+    case RECEIVER:
       // Setup receiving SET message
-      while(receive_control_frame(port, TRANS_A) != SET_C);
+      while(receive_control_frame(fd, TRANS_A) != SET_C);
       printf("SET Command received\n");
 
       // Send UA response
-      send_control_frame(port, REC_A, UA_C);
+      send_control_frame(fd, REC_A, UA_C);
       printf("UA Command sent\n");
     break;
     default:
-      return -1
+      return -1;
     break;
   }
   return fd;
@@ -181,20 +181,20 @@ int llwrite(int fd, char * buffer, int length) {
     unsigned char command = receive_control_frame(fd, REC_A);
 
     switch(command) {
-      case: RR_C0
+      case RR_C0:
         DATA_C = DATA_C0;
         printf("Receiver ready. Data transmitted.\n");
 
         return num_written_bytes;
       break;
-      case: RR_C1
+      case RR_C1:
         DATA_C = DATA_C1;
         printf("Receiver ready. Data transmitted.\n");
 
         return num_written_bytes;
       break;
-      case: REJ_C0
-      case: REJ_C1
+      case REJ_C0:
+      case REJ_C1:
         printf("Receiver ready. Data transmitted.\n");
       break;
       default:
@@ -230,20 +230,20 @@ int send_data_frame(int fd, char * buffer, int length) {
 ////////////////////////////////////////////////////////////////////////////////
 
 
-int llread(int fd, char* buffer) {
+int llread(int fd, unsigned char* buffer) {
   // Reset DATA_C variable
   DATA_C = DATA_C == 0 ? DATA_C1 : DATA_C0;
 
-  receive_data_frame(fd);
+  int len = receive_data_frame(fd);
 
   buffer = data;
 
   printf("Message read %s\n", buffer);
 
-  return SUCCESS;
+  return len;
 }
 
-//TODO: Fix details on this function
+// TODO: Fix details on this function (The return value must be the length of the data)
 // TODO: DATA_C holds the number of the frame the receiver expects to read. To ensure the function is readable, only do the necessary actions after processing the packet (outside the loop)
 int receive_data_frame(int fd) {
   unsigned int index = 0;
@@ -253,7 +253,6 @@ int receive_data_frame(int fd) {
   enum set_states state = START;
 
   while (state != END) {
-
     read_serial(fd, &byte, 1);
 
     switch(state) {
@@ -319,10 +318,10 @@ int receive_data_frame(int fd) {
   }
   else {
     send_control_frame(fd, REC_A, DATA_C == DATA_C0 ? REJ_C1 : REJ_C0);
-    return INSUCCESS;
+    return -1;
   }
 
-  return SUCCESS;
+  return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
