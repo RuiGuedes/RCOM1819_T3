@@ -17,7 +17,7 @@ int DATA_C = DATA_C1;
 unsigned char data[255];
 
 /*
-Manages alarm interruptions
+  Manages alarm interruptions
 */
 void manage_alarm() {
   flag=1;
@@ -28,54 +28,53 @@ void manage_alarm() {
 ///////////////////////// Connection Establishment /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-int llopen(int port, int user) {
+int llopen(char *port, int user) {
   userType = user;
+  int fd = init_serial_n_canon(port);
 
-  if(userType == TRANSMITTER) {
-    //Manage alarm interruptions
-    (void) signal(SIGALRM, manage_alarm);
+  switch(userType) {
+    case: TRANSMITTER
+      //Manage alarm interruptions
+      (void) signal(SIGALRM, manage_alarm);
 
-    while(attempts < 4) {
-      // Send SET command
-      send_control_frame(port, TRANS_A, SET_C);
-      printf("SET command sent\n");
+      while (attempts < 4) {
+        // Send SET command
+        send_control_frame(port, TRANS_A, SET_C);
+        printf("SET command sent\n");
 
-      // Set alarm for 3 seconds
-      if(flag){
-        alarm(3);
-        flag=0;
+        // Set alarm for 3 seconds
+        if(flag){
+          alarm(3);
+          flag=0;
+        }
+
+        // Setup receiving UA message
+        if (receive_control_frame(port, REC_A) ==  UA_C) {
+          printf("UA Command received\n");
+          break;
+        }
+        else {
+          printf("UA Command not received. Attempting to reconnect.\n");
+        }
       }
 
-      // Setup receiving UA message
-      if(receive_control_frame(port, REC_A) ==  UA_C) {
-        printf("UA Command received\n");
-        break;
-      }
-      else {
-        printf("UA Command not received. Attempting to reconnect.\n");
-      }
-    }
+      if (attempts >= 4)
+        printf("UA Command not received\n")
+      break;
+    case: RECEIVER
+      // Setup receiving SET message
+      while(receive_control_frame(port, TRANS_A) != SET_C);
+      printf("SET Command received\n");
 
-    if(attempts >= 4) {
-      printf("UA Command not received\n");
-    }
+      // Send UA response
+      send_control_frame(port, REC_A, UA_C);
+      printf("UA Command sent\n");
+    break;
+    default:
+      return -1
+    break;
   }
-  else if(userType == RECEIVER) {
-    // Setup receiving SET message
-    while(receive_control_frame(port, TRANS_A) != SET_C) {
-    }
-
-    printf("SET Command received\n");
-
-    // Send UA response
-    send_control_frame(port, REC_A, UA_C);
-    printf("UA Command sent\n");
-  }
-  else {
-    return INSUCCESS;
-  }
-
-  return SUCCESS;
+  return fd;
 }
 
 void send_control_frame(int fd, int addr_byte, int ctrl_byte) {
@@ -97,8 +96,8 @@ unsigned char receive_control_frame(int fd, int addr_byte) {
   enum set_states state = START;
 
   while (state != END) {
-    if(flag && (userType == TRANSMITTER)) {
-      return INSUCCESS;
+    if (flag && (userType == TRANSMITTER)) {
+      return 0;
     }
 
     read_serial(fd, &byte, 1);
@@ -175,27 +174,35 @@ int llwrite(int fd, char * buffer, int length) {
     // Set alarm for 3 seconds
     if(flag){
       alarm(3);
-      flag=0;
+      flag = 0;
     }
 
     //Check for receiver response
     unsigned char command = receive_control_frame(fd, REC_A);
 
-    if((command == RR_C0) || (command == RR_C1)) {
-      DATA_C = DATA_C == DATA_C0 ? DATA_C1 : DATA_C0;
-      printf("Receiver ready. Data transmitted.\n");
+    switch(command) {
+      case: RR_C0
+        DATA_C = DATA_C0;
+        printf("Receiver ready. Data transmitted.\n");
+
+        return num_written_bytes;
+      break;
+      case: RR_C1
+        DATA_C = DATA_C1;
+        printf("Receiver ready. Data transmitted.\n");
+
+        return num_written_bytes;
+      break;
+      case: REJ_C0
+      case: REJ_C1
+        printf("Receiver ready. Data transmitted.\n");
+      break;
+      default:
+        printf("Command not received. Attempting to retransmit data.\n");
       break;
     }
-    else if((command == REJ_C0) || (command == REJ_C1)) {
-      printf("Receveir reject. Retransmitting data.\n");
-    }
-    else {
-      printf("Command not received. Attempting to retransmitte data.\n");
-    }
-
   }
-
-  return num_written_bytes;
+  return -1;
 }
 
 int send_data_frame(int fd, char * buffer, int length) {
@@ -237,6 +244,7 @@ int llread(int fd, char* buffer) {
 }
 
 //TODO: Fix details on this function
+// TODO: DATA_C holds the number of the frame the receiver expects to read. To ensure the function is readable, only do the necessary actions after processing the packet (outside the loop)
 int receive_data_frame(int fd) {
   unsigned int index = 0;
   unsigned char byte, ctrl_byte, bbc2 = 0;
@@ -306,11 +314,11 @@ int receive_data_frame(int fd) {
 
   // Check BBC2 status
   if(bbc2 == 0) {
-    send_control_frame(fd, REC_A, DATA_C == DATA_C0 ? RR_C0 : RR_C1);
+    send_control_frame(fd, REC_A, DATA_C == DATA_C0 ? RR_C1 : RR_C0);
     DATA_C = DATA_C == DATA_C0 ? DATA_C1 : DATA_C0;
   }
   else {
-    send_control_frame(fd, REC_A, DATA_C == DATA_C0 ? REJ_C0 : REJ_C1);
+    send_control_frame(fd, REC_A, DATA_C == DATA_C0 ? REJ_C1 : REJ_C0);
     return INSUCCESS;
   }
 

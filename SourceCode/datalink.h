@@ -25,25 +25,30 @@
 #define REJ_C1      0x81
 
 
-// List of returns
-#define SUCCESS   1
-#define INSUCCESS 0
-
-
 // FRAME SEND AND RECEIVER FUNCTIONS
-
 #define CTRL_FRAME_LEN   5 // Length of the control frame (in bytes)
-#define DATA_FRAME_LEN   6 // Length of the data frame (in bytes)
+#define DATA_FRAME_LEN   6 // Length of the data frame header and trailer (in bytes)
 
 // Global variables
-
 extern int flag, attempts, DATA_C;
+
+
+// DataLink API
 
 /*
 
 */
 int llopen(int port, int user);
 
+/*
+
+*/
+int llwrite(int fd, char * buffer, int length);
+
+int llread(int fd, char* buffer);
+
+
+// DataLink Aux Functions
 
 /* Send Supervision or Unnumbered frames
 
@@ -57,17 +62,11 @@ void send_control_frame(int fd, int addr_byte, int ctrl_byte);
 
 */
 unsigned char receive_control_frame(int fd, int addr_byte);
-/*
-
-*/
-int llwrite(int fd, char * buffer, int length);
 
 /*
 
 */
 int send_data_frame(int fd, char * buffer, int length);
-
-int llread(int fd, char* buffer);
 
 int receive_data_frame(int fd);
 

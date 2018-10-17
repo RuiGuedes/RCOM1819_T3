@@ -16,13 +16,11 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  int port = init_serial_n_canon(argv[1]);
+  int fd = llopen(argv[1], TRANSMITTER);
 
-  llopen(port, TRANSMITTER);
+  llwrite(fd, "Information to be sent", 23);
 
-  llwrite(port, "Information to be sent", 22);
-
-  close_serial(port, 2);
+  close_serial(fd, 2);
 
   return 0;
 }
