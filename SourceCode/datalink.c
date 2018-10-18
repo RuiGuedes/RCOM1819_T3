@@ -34,44 +34,44 @@ int llopen(char *port, int user) {
 
   switch(userType) {
     case TRANSMITTER:
-    //Manage alarm interruptions
-    (void) signal(SIGALRM, manage_alarm);
+      //Manage alarm interruptions
+      (void) signal(SIGALRM, manage_alarm);
 
-    while (attempts < 4) {
-      // Send SET command
-      send_control_frame(fd, TRANS_A, SET_C);
-      printf("SET command sent\n");
+      while (attempts < 4) {
+        // Send SET command
+        send_control_frame(fd, TRANS_A, SET_C);
+        printf("SET Command sent\n");
 
-      // Set alarm for 3 seconds
-      if(flag){
-        alarm(3);
-        flag=0;
+        // Set alarm for 3 seconds
+        if(flag){
+          alarm(3);
+          flag=0;
+        }
+
+        // Setup receiving UA message
+        if (receive_control_frame(fd, TRANS_A) ==  UA_C) {
+          printf("UA Command received\n");
+          break;
+        }
+        else {
+          printf("UA Command not received. Attempting to reconnect.\n");
+        }
       }
 
-      // Setup receiving UA message
-      if (receive_control_frame(fd, REC_A) ==  UA_C) {
-        printf("UA Command received\n");
-        break;
-      }
-      else {
-        printf("UA Command not received. Attempting to reconnect.\n");
-      }
-    }
-
-    if (attempts >= 4)
-    printf("UA Command not received\n");
+      if (attempts >= 4)
+        printf("UA Command not received\n");
     break;
     case RECEIVER:
-    // Setup receiving SET message
-    while(receive_control_frame(fd, TRANS_A) != SET_C);
-    printf("SET Command received\n");
+      // Setup receiving SET message
+      while(receive_control_frame(fd, TRANS_A) != SET_C);
+      printf("SET Command received\n");
 
-    // Send UA response
-    send_control_frame(fd, REC_A, UA_C);
-    printf("UA Command sent\n");
+      // Send UA response
+      send_control_frame(fd, TRANS_A, UA_C);
+      printf("UA Command sent\n");
     break;
     default:
-    return -1;
+      return -1;
     break;
   }
   return fd;
@@ -178,7 +178,7 @@ int llwrite(int fd, char * buffer, int length) {
     }
 
     //Check for receiver response
-    unsigned char command = receive_control_frame(fd, REC_A);
+    unsigned char command = receive_control_frame(fd, TRANS_A);
 
     switch(command) {
       case RR_C0:
@@ -254,8 +254,6 @@ int llread(int fd, char* buffer) {
     }
   }
   else {
-    //BBC2 BROKEN - Command REJ
-
     if(DATA_C == (*data_c)) {
       command = (*data_c) == DATA_C0 ? REJ_C0 : REJ_C1;
     }
@@ -344,3 +342,58 @@ int receive_data_frame(int fd, unsigned char * data_c) {
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Termination of connection ////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+int llclose(int fd) {
+  // Reset global variables
+  attempts = 1;
+  flag = 1;
+
+  switch (userType) {
+    case TRANSMITTER:
+      //Manage alarm interruptions
+      (void) signal(SIGALRM, manage_alarm);
+
+      while (attempts < 4) {
+        // Send SET command
+        send_control_frame(fd, TRANS_A, DISC_C);
+        printf("DISC Command sent\n");
+
+        // Set alarm for 3 seconds
+        if(flag){
+          alarm(3);
+          flag=0;
+        }
+
+        // Setup receiving DISC message
+        if (receive_control_frame(fd, TRANS_A) ==  DISC_C) {
+          printf("DISC Command received\n");
+          send_control_frame(fd, TRANS_A, UA_C);
+          printf("UA Command sent\n");
+          break;
+        }
+        else {
+          printf("DISC Command not received. Attempting to retransmit command.\n");
+        }
+      }
+
+      if (attempts >= 4)
+        printf("DISC Command not received\n");
+    break;
+    case RECEIVER:
+      // Setup receiving DISC message
+      while(receive_control_frame(fd, TRANS_A) != DISC_C);
+      printf("DISC Command received\n");
+
+      // Send DISC response
+      send_control_frame(fd, TRANS_A, DISC_C);
+      printf("DISC Command sent\n");
+    break;
+    default:
+      return -1;
+    break;
+  }
+
+  close_serial(fd, 2);
+
+  return 0;
+}

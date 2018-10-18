@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 
   llwrite(fd, "Information to be sent", 23);
 
-  close_serial(fd, 2);
+  llclose(fd);
 
   return 0;
 }

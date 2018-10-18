@@ -36,17 +36,18 @@ extern int flag, attempts, DATA_C;
 // DataLink API
 
 /*
-
 */
 int llopen(char *port, int user);
 
 /*
-
 */
 int llwrite(int fd, char * buffer, int length);
 
+/*
+*/
 int llread(int fd, char* buffer);
 
+int llclose(int fd);
 
 // DataLink Aux Functions
 

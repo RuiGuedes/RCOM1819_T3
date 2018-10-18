@@ -16,12 +16,12 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  unsigned char buffer[255];
-  int port = llopen(argv[1], RECEIVER);
+  char buffer[255];
+  int fd = llopen(argv[1], RECEIVER);
 
-  llread(port, buffer);
+  llread(fd, buffer);
 
-  close_serial(port, 2);
+  llclose(fd);
 
   return 0;
 }
