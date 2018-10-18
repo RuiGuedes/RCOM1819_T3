@@ -13,11 +13,11 @@
 int userType;
 int flag = 1;
 int attempts = 1;
-int DATA_C = DATA_C1;
-unsigned char data[255];
+int DATA_C = DATA_C0;
+char data[255];
 
 /*
-  Manages alarm interruptions
+Manages alarm interruptions
 */
 void manage_alarm() {
   flag=1;
@@ -34,44 +34,44 @@ int llopen(char *port, int user) {
 
   switch(userType) {
     case TRANSMITTER:
-      //Manage alarm interruptions
-      (void) signal(SIGALRM, manage_alarm);
+    //Manage alarm interruptions
+    (void) signal(SIGALRM, manage_alarm);
 
-      while (attempts < 4) {
-        // Send SET command
-        send_control_frame(fd, TRANS_A, SET_C);
-        printf("SET command sent\n");
+    while (attempts < 4) {
+      // Send SET command
+      send_control_frame(fd, TRANS_A, SET_C);
+      printf("SET command sent\n");
 
-        // Set alarm for 3 seconds
-        if(flag){
-          alarm(3);
-          flag=0;
-        }
-
-        // Setup receiving UA message
-        if (receive_control_frame(fd, REC_A) ==  UA_C) {
-          printf("UA Command received\n");
-          break;
-        }
-        else {
-          printf("UA Command not received. Attempting to reconnect.\n");
-        }
+      // Set alarm for 3 seconds
+      if(flag){
+        alarm(3);
+        flag=0;
       }
 
-      if (attempts >= 4)
-        printf("UA Command not received\n");
-      break;
-    case RECEIVER:
-      // Setup receiving SET message
-      while(receive_control_frame(fd, TRANS_A) != SET_C);
-      printf("SET Command received\n");
+      // Setup receiving UA message
+      if (receive_control_frame(fd, REC_A) ==  UA_C) {
+        printf("UA Command received\n");
+        break;
+      }
+      else {
+        printf("UA Command not received. Attempting to reconnect.\n");
+      }
+    }
 
-      // Send UA response
-      send_control_frame(fd, REC_A, UA_C);
-      printf("UA Command sent\n");
+    if (attempts >= 4)
+    printf("UA Command not received\n");
+    break;
+    case RECEIVER:
+    // Setup receiving SET message
+    while(receive_control_frame(fd, TRANS_A) != SET_C);
+    printf("SET Command received\n");
+
+    // Send UA response
+    send_control_frame(fd, REC_A, UA_C);
+    printf("UA Command sent\n");
     break;
     default:
-      return -1;
+    return -1;
     break;
   }
   return fd;
@@ -182,32 +182,38 @@ int llwrite(int fd, char * buffer, int length) {
 
     switch(command) {
       case RR_C0:
-        DATA_C = DATA_C0;
-        printf("Receiver ready. Data transmitted.\n");
-
-        return num_written_bytes;
+      case REJ_C0:
+        if(DATA_C == DATA_C1) {
+          DATA_C = DATA_C0;
+          printf("Receiver ready. Data transmitted.\n");
+          return num_written_bytes;
+        }
+        else {
+          printf("Reject. Attempting to retransmit data.\n");
+        }
       break;
       case RR_C1:
-        DATA_C = DATA_C1;
-        printf("Receiver ready. Data transmitted.\n");
-
-        return num_written_bytes;
-      break;
-      case REJ_C0:
       case REJ_C1:
-        printf("Receiver ready. Data transmitted.\n");
+        if(DATA_C == DATA_C0) {
+          DATA_C = DATA_C1;
+          printf("Receiver ready. Data transmitted.\n");
+          return num_written_bytes;
+        }
+        else {
+          printf("Reject. Attempting to retransmit data.\n");
+        }
       break;
       default:
         printf("Command not received. Attempting to retransmit data.\n");
       break;
     }
   }
+
   return -1;
 }
 
 int send_data_frame(int fd, char * buffer, int length) {
   unsigned char frame[DATA_FRAME_LEN + length], bbc2 = 0;
-  DATA_C = DATA_C == 0 ? DATA_C1 : DATA_C0;
 
   frame[0] = FLAG;
   frame[1] = TRANS_A;
@@ -230,24 +236,47 @@ int send_data_frame(int fd, char * buffer, int length) {
 ////////////////////////////////////////////////////////////////////////////////
 
 
-int llread(int fd, unsigned char* buffer) {
-  // Reset DATA_C variable
-  DATA_C = DATA_C == 0 ? DATA_C1 : DATA_C0;
+int llread(int fd, char* buffer) {
+  unsigned char * data_c = NULL, command;
 
-  int len = receive_data_frame(fd);
+  int length = receive_data_frame(fd, data_c);
 
-  buffer = data;
+  if(length > -1) {
+    command = (*data_c) == DATA_C0 ? RR_C1 : RR_C0;
+
+    if(DATA_C == (*data_c)) {
+        DATA_C = (*data_c) == DATA_C0 ? DATA_C1 : DATA_C0;
+        //STORE DATA
+        buffer = data;
+    }
+    else {
+      printf("Duplicate frame\n");
+    }
+  }
+  else {
+    //BBC2 BROKEN - Command REJ
+
+    if(DATA_C == (*data_c)) {
+      command = (*data_c) == DATA_C0 ? REJ_C0 : REJ_C1;
+    }
+    else {
+      command = DATA_C == DATA_C0 ? RR_C0 : RR_C1;
+      printf("Duplicate frame\n");
+    }
+
+  }
+
+  send_control_frame(fd, TRANS_A, command);
 
   printf("Message read %s\n", buffer);
 
-  return len;
+  return length;
 }
 
-// TODO: Fix details on this function (The return value must be the length of the data)
-// TODO: DATA_C holds the number of the frame the receiver expects to read. To ensure the function is readable, only do the necessary actions after processing the packet (outside the loop)
-int receive_data_frame(int fd) {
+
+int receive_data_frame(int fd, unsigned char * data_c) {
   unsigned int index = 0;
-  unsigned char byte, ctrl_byte, bbc2 = 0;
+  unsigned char byte, bbc2 = 0;
 
   enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
   enum set_states state = START;
@@ -257,71 +286,59 @@ int receive_data_frame(int fd) {
 
     switch(state) {
       case START:
-      if(byte == FLAG) {
-        state = FLAG_REC;
-      }
+        if(byte == FLAG) {
+          state = FLAG_REC;
+        }
       break;
       case FLAG_REC:
-      if(byte == TRANS_A) {
-        state = A_REC;
-      }
-      else if (byte != FLAG) {
-        state = START;
-      }
+        if(byte == TRANS_A) {
+          state = A_REC;
+        }
+        else if (byte != FLAG) {
+          state = START;
+        }
       break;
       case A_REC:
-      if((DATA_C == DATA_C0 && byte == DATA_C0) || (DATA_C == DATA_C1 && byte == DATA_C1)) {
-        ctrl_byte = byte;
-        DATA_C = DATA_C == DATA_C0 ? DATA_C1 : DATA_C0;
-        state = C_REC;
-      }
-      else if((DATA_C == DATA_C1 && byte == DATA_C0) || (DATA_C == DATA_C0 && byte == DATA_C1)) {
-        send_control_frame(fd, REC_A, byte == DATA_C0 ? RR_C0 : RR_C1);
-        state = END;
-      }
-      else if(byte == FLAG){
-        state = FLAG_REC;
-      }
-      else {
-        state = START;
-      }
+        if(byte == FLAG){
+          state = FLAG_REC;
+        }
+        else if(byte == DATA_C0 || byte == DATA_C1) {
+          *data_c = byte;
+          state = C_REC;
+        }
+        else
+          state = START;
       break;
       case C_REC:
-      if(byte == (TRANS_A^ctrl_byte)) {
-        state = BCC_OK;
-      }
-      else if(byte == FLAG) {
-        state = FLAG_REC;
-      }
-      else {
-        state = START;
-      }
+        if(byte == (TRANS_A^(*data_c))) {
+          state = BCC_OK;
+        }
+        else if(byte == FLAG) {
+          state = FLAG_REC;
+        }
+        else {
+          state = START;
+        }
       break;
       case BCC_OK:
-      if(byte == FLAG) {
-        state = END;
-      }
-      else {
-        bbc2 ^= byte;
-        data[index++] = byte;
-      }
+        if(byte == FLAG) {
+          state = END;
+        }
+        else {
+          bbc2 ^= byte;
+          data[index++] = byte;
+        }
       break;
       case END:
       break;
     }
   }
 
-  // Check BBC2 status
   if(bbc2 == 0) {
-    send_control_frame(fd, REC_A, DATA_C == DATA_C0 ? RR_C1 : RR_C0);
-    DATA_C = DATA_C == DATA_C0 ? DATA_C1 : DATA_C0;
-  }
-  else {
-    send_control_frame(fd, REC_A, DATA_C == DATA_C0 ? REJ_C1 : REJ_C0);
-    return -1;
+    return index;
   }
 
-  return 0;
+  return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

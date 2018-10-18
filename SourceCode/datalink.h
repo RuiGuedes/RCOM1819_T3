@@ -45,7 +45,7 @@ int llopen(char *port, int user);
 */
 int llwrite(int fd, char * buffer, int length);
 
-int llread(int fd, unsigned char* buffer);
+int llread(int fd, char* buffer);
 
 
 // DataLink Aux Functions
@@ -68,6 +68,6 @@ unsigned char receive_control_frame(int fd, int addr_byte);
 */
 int send_data_frame(int fd, char * buffer, int length);
 
-int receive_data_frame(int fd);
+int receive_data_frame(int fd, unsigned char * data_c);
 
 #endif
