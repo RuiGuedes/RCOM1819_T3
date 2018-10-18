@@ -69,6 +69,6 @@ unsigned char receive_control_frame(int fd, int addr_byte);
 */
 int send_data_frame(int fd, char * buffer, int length);
 
-int receive_data_frame(int fd, unsigned char * data_c);
+int receive_data_frame(int fd, unsigned char * data_c, char * data);
 
 #endif

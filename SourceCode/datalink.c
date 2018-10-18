@@ -14,7 +14,6 @@ int userType;
 int flag = 1;
 int attempts = 1;
 int DATA_C = DATA_C0;
-char data[255];
 
 /*
 Manages alarm interruptions
@@ -237,42 +236,41 @@ int send_data_frame(int fd, char * buffer, int length) {
 
 
 int llread(int fd, char* buffer) {
-  unsigned char * data_c = NULL, command;
+  int length;
+  unsigned char data_c, tmp_data_c = DATA_C, command;
 
-  int length = receive_data_frame(fd, data_c);
+  while(tmp_data_c == DATA_C) {
+    length = receive_data_frame(fd, &data_c, buffer);
 
-  if(length > -1) {
-    command = (*data_c) == DATA_C0 ? RR_C1 : RR_C0;
+    if(length > -1) {
+      command = data_c == DATA_C0 ? RR_C1 : RR_C0;
 
-    if(DATA_C == (*data_c)) {
-        DATA_C = (*data_c) == DATA_C0 ? DATA_C1 : DATA_C0;
-        //STORE DATA
-        buffer = data;
+      if(DATA_C == data_c) {
+          DATA_C = data_c == DATA_C0 ? DATA_C1 : DATA_C0;
+      }
+      else {
+        printf("Duplicate frame\n");
+      }
     }
     else {
-      printf("Duplicate frame\n");
+      if(DATA_C == data_c) {
+        command = data_c == DATA_C0 ? REJ_C0 : REJ_C1;
+      }
+      else {
+        command = DATA_C == DATA_C0 ? RR_C0 : RR_C1;
+        printf("Duplicate frame\n");
+      }
+
     }
+
+    send_control_frame(fd, TRANS_A, command);
   }
-  else {
-    if(DATA_C == (*data_c)) {
-      command = (*data_c) == DATA_C0 ? REJ_C0 : REJ_C1;
-    }
-    else {
-      command = DATA_C == DATA_C0 ? RR_C0 : RR_C1;
-      printf("Duplicate frame\n");
-    }
-
-  }
-
-  send_control_frame(fd, TRANS_A, command);
-
-  printf("Message read %s\n", buffer);
 
   return length;
 }
 
 
-int receive_data_frame(int fd, unsigned char * data_c) {
+int receive_data_frame(int fd, unsigned char * data_c, char * data) {
   unsigned int index = 0;
   unsigned char byte, bbc2 = 0;
 

@@ -21,6 +21,8 @@ int main(int argc, char** argv)
 
   llread(fd, buffer);
 
+  printf("Message read: %s\n", buffer);
+
   llclose(fd);
 
   return 0;
