@@ -212,23 +212,51 @@ int llwrite(int fd, char * buffer, int length) {
 }
 
 int send_data_frame(int fd, char * buffer, int length) {
-  unsigned char frame[DATA_FRAME_LEN + length], bbc2 = 0;
+  unsigned int index = 4;
+  unsigned char frame[DATA_FRAME_LEN + length*2], bbc2 = 0;
 
   frame[0] = FLAG;
   frame[1] = TRANS_A;
   frame[2] = DATA_C;
   frame[3] = frame[1]^frame[2];
 
+  // Generating BBC2
   for(int i = 0; i < length; i++) {
-    frame[4+i] = buffer[i];
     bbc2 ^= buffer[i];
   }
 
-  frame[4+length] = bbc2;
-  frame[5+length] = FLAG;
+  // Byte Stuffing - Data
+  for(int i = 0; i < length; i++) {
 
-  return write_serial(fd, frame, DATA_FRAME_LEN + length);
+    switch (buffer[i]) {
+      case FLAG:
+      case ESC:
+        frame[index++] = ESC;
+        frame[index++] = buffer[i]^BST_BYTE;
+      break;
+      default:
+        frame[index++] = buffer[i];
+      break;
+    }
+  }
+
+  // Byte Stuffing - BBC2
+  switch (bbc2) {
+    case FLAG:
+    case ESC:
+      frame[index++] = ESC;
+      frame[index++] = bbc2^BST_BYTE;
+      frame[index] = FLAG;
+    break;
+    default:
+      frame[index++] = bbc2;
+      frame[index] = FLAG;
+    break;
+  }
+
+  return write_serial(fd, frame, index);
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Data Transmission - Receiver /////////////////////////
@@ -318,9 +346,18 @@ int receive_data_frame(int fd, unsigned char * data_c, char * data) {
       break;
       case BCC_OK:
         if(byte == FLAG) {
-          state = END;
+            state = END;
         }
         else {
+          // Destuffing byte operation
+          if(byte == ESC) {
+            // Reads next byte
+            read_serial(fd, &byte, 1);
+
+            // Destuffs read byte
+            byte ^= BST_BYTE;
+          }
+
           bbc2 ^= byte;
           data[index++] = byte;
         }

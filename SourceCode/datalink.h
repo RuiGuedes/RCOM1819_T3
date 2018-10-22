@@ -6,6 +6,8 @@
 #define RECEIVER    1
 
 #define FLAG      0x7
+#define ESC       0x7D
+#define BST_BYTE  0x20
 
 #define TRANS_A   0x03 // Transmitter commands and Receiver responses
 #define REC_A     0x01 // Receiver commands and Transmitter responses
@@ -27,7 +29,7 @@
 
 // FRAME SEND AND RECEIVER FUNCTIONS
 #define CTRL_FRAME_LEN   5 // Length of the control frame (in bytes)
-#define DATA_FRAME_LEN   6 // Length of the data frame header and trailer (in bytes)
+#define DATA_FRAME_LEN   7 // Length of the data frame header and trailer (in bytes)
 
 // Global variables
 extern int flag, attempts, DATA_C;
