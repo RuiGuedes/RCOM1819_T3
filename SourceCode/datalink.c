@@ -34,7 +34,7 @@ int llopen(char *port, int user) {
   switch(userType) {
     case TRANSMITTER:
       //Manage alarm interruptions
-      (void) signal(SIGALRM, manage_alarm);
+      signal(SIGALRM, manage_alarm);
 
       while (attempts < 4) {
         // Send SET command
@@ -348,16 +348,13 @@ int llclose(int fd) {
 
   switch (userType) {
     case TRANSMITTER:
-      //Manage alarm interruptions
-      (void) signal(SIGALRM, manage_alarm);
-
       while (attempts < 4) {
         // Send SET command
         send_control_frame(fd, TRANS_A, DISC_C);
         printf("DISC Command sent\n");
 
         // Set alarm for 3 seconds
-        if(flag){
+        if (flag){
           alarm(3);
           flag=0;
         }
@@ -379,12 +376,16 @@ int llclose(int fd) {
     break;
     case RECEIVER:
       // Setup receiving DISC message
-      while(receive_control_frame(fd, TRANS_A) != DISC_C);
+      while (receive_control_frame(fd, TRANS_A) != DISC_C);
       printf("DISC Command received\n");
 
       // Send DISC response
       send_control_frame(fd, TRANS_A, DISC_C);
       printf("DISC Command sent\n");
+
+      // Setup receiving UA message
+      while (receive_control_frame(fd, TRANS_A) != UA_C);
+      printf("UA Command received\n");
     break;
     default:
       return -1;
