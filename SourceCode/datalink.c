@@ -246,13 +246,13 @@ int send_data_frame(int fd, char * buffer, int length) {
     case ESC:
       frame[index++] = ESC;
       frame[index++] = bbc2^BST_BYTE;
-      frame[index] = FLAG;
     break;
     default:
       frame[index++] = bbc2;
-      frame[index] = FLAG;
     break;
   }
+
+  frame[index] = FLAG;
 
   return write_serial(fd, frame, index);
 }
