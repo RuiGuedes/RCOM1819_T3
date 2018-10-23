@@ -31,10 +31,8 @@ int main(int argc, char** argv)
 	}
 
   for(int i = 0; i < file_length; i++) {
-    fwrite(buffer, 1, 1, file);
+    fwrite(buffer+i, 1, 1, file);
   }
-
-  printf("Message read: %s\n", buffer);
 
   return 0;
 }

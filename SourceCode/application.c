@@ -18,9 +18,10 @@ int send_control_packet(int fd, int type, char * filename, unsigned int length) 
 
   packet[index++] = FILESIZE_T;
   packet[index++] = sizeof(length);
-  packet[index] = length;
-
-  index += sizeof(length);
+  packet[index++] = length & 0xFF;
+  packet[index++] = (length >> 8) & 0xFF;
+  packet[index++] = (length >> 16) & 0xFF;
+  packet[index++] = (length >> 24) & 0xFF;
 
   packet[index++] = FILENAME_T;
   packet[index++] = strlen(filename);
@@ -48,6 +49,7 @@ int send_control_packet(int fd, int type, char * filename, unsigned int length) 
 int receive_control_packet(int fd, int type, char * filename, unsigned int * file_length) {
     int tmp_length = 0;
     unsigned int index = 0;
+    *file_length = 0xFFFFFFFF;
     char buffer[CONTROL_PACKET_LEN + 255 + sizeof(int)];
 
     int packet_length = llread(fd, buffer);
@@ -61,7 +63,10 @@ int receive_control_packet(int fd, int type, char * filename, unsigned int * fil
         switch (buffer[index++]) {
           case FILESIZE_T:
             tmp_length = buffer[index++];
-            *file_length = buffer[index];
+            *file_length = ((buffer[index+3] << 24) | 0x00FFFFFF) & *file_length;
+            *file_length = ((buffer[index+2] << 16) | 0x00FFFFFF) & *file_length;
+            *file_length = ((buffer[index+1] << 8) | 0x00FFFFFF) & *file_length;
+            *file_length = buffer[index] & *file_length;
             index += tmp_length;
           break;
           case FILENAME_T:
@@ -100,7 +105,6 @@ int send_data_packet(int fd, int N, char * buffer, unsigned int length) {
   return llwrite(fd, packet, index);
 }
 
-
 int receive_data_packet(int fd, char * buffer, int * buf_len) {
    unsigned int index = 0;
    char packet[DATA_PACKET_LEN + MAX_DATA_LEN];
@@ -114,7 +118,7 @@ int receive_data_packet(int fd, char * buffer, int * buf_len) {
 
    int N = packet[index++];
 
-   *buf_len = 256*packet[index] + packet[index+1];
+   *buf_len = 256*(unsigned char)(packet[index]) + (unsigned char)(packet[index+1]);
    index += 2;
 
    for(int i = 0; i < *buf_len; i++) {

@@ -17,6 +17,7 @@ int main(int argc, char** argv)
     exit(1);
   }
 
+  int length = 0;
   char file_content[MAX_DATA_LEN];
 
   // Open file to be sent
@@ -25,15 +26,12 @@ int main(int argc, char** argv)
 		printf("ERROR: File: %s could not be opened.\n", argv[2]);
 		return -1;
 	}
-  int i = 0;
 
   while (!feof(file)) {
-      i += fread(file_content, 1, sizeof(file_content), file);
+      length += fread(file_content, 1, sizeof(file_content), file);
   }
 
-  printf("%d\n", i);
-
-  send_file(argv[1], argv[2], file_content, i);
+  send_file(argv[1], argv[2], file_content, length);
 
   return 0;
 }
