@@ -3,6 +3,14 @@
 #include "datalink.h"
 #include "application.h"
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// NOTA - Neste momento a transferência de ficheiro está a funcionar, qualquer alteração só é validada caso a transferência de ficheiros se mantenham correta. //
+//      - Não facam refactoring sem ter a certeza das implicações                                                                                              //
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//TODO: Na função send_file verificar a utilidade do numero de sequencia
+//TODO: Tanto na função send file como receive_file adicionar condições para situações de erro (return -1)
+//TODO: Verificar as restantes funções para ver se não estamos a esquecer de nada
 
 int send_control_packet(int fd, int type, char * filename, unsigned int length) {
   unsigned int index = 0; //, attempts = 0;
