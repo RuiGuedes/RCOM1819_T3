@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "datalink.h"
 #include "application.h"
 
@@ -22,8 +23,8 @@ int send_control_packet(int fd, int type, char * filename, unsigned int length) 
   index += sizeof(length);
 
   packet[index++] = FILENAME_T;
-  packet[index++] = sizeof(filename);
-  for(int i = 0; i < sizeof(filename); i++) {
+  packet[index++] = strlen(filename);
+  for(int i = 0; i < strlen(filename); i++) {
       packet[index++] = filename[i];
   }
 
@@ -41,7 +42,7 @@ int send_control_packet(int fd, int type, char * filename, unsigned int length) 
   return num_written_bytes;
   */
 
-  return llwrite(fd, packet, sizeof(packet));
+  return llwrite(fd, packet, index);
 }
 
 int receive_control_packet(int fd, int type, char * filename, unsigned int * file_length) {
@@ -96,7 +97,7 @@ int send_data_packet(int fd, int N, char * buffer, unsigned int length) {
     packet[index++] = buffer[i];
   }
 
-  return llwrite(fd, packet, sizeof(packet));
+  return llwrite(fd, packet, index);
 }
 
 
@@ -113,7 +114,7 @@ int receive_data_packet(int fd, char * buffer, int * buf_len) {
 
    int N = packet[index++];
 
-   *buf_len = 256*packet[index+1] + packet[index+ 2];
+   *buf_len = 256*packet[index] + packet[index+1];
    index += 2;
 
    for(int i = 0; i < *buf_len; i++) {

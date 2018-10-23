@@ -17,11 +17,11 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  char * filename = NULL;
-  unsigned int * file_length = NULL;
+  char filename[255];
+  unsigned int file_length = 0;
   char buffer[MAX_DATA_LEN];
 
-  receive_file(argv[1], filename, buffer, file_length);
+  receive_file(argv[1], filename, buffer, &file_length);
 
   // Open file to be sent
 	FILE* file = fopen(filename, "w");
@@ -30,8 +30,8 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-  for(int i = 0; i < *file_length; i++) {
-    fwrite(buffer, 1, sizeof(buffer), file);
+  for(int i = 0; i < file_length; i++) {
+    fwrite(buffer, 1, 1, file);
   }
 
   printf("Message read: %s\n", buffer);
