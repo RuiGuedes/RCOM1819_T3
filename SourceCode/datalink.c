@@ -220,13 +220,9 @@ int send_data_frame(int fd, char * buffer, int length) {
   frame[2] = DATA_C;
   frame[3] = frame[1]^frame[2];
 
-  // Generating BBC2
+  // Byte Stuffing - Data & BBC2
   for(int i = 0; i < length; i++) {
     bbc2 ^= buffer[i];
-  }
-
-  // Byte Stuffing - Data
-  for(int i = 0; i < length; i++) {
 
     switch (buffer[i]) {
       case FLAG:
@@ -368,7 +364,7 @@ int receive_data_frame(int fd, unsigned char * data_c, char * data) {
   }
 
   if(bbc2 == 0) {
-    return index;
+    return (index - 1);
   }
 
   return -1;
