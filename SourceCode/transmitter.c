@@ -5,10 +5,11 @@
 
 #include "serialconfig.h"
 #include "datalink.h"
+#include "application.h"
 
 int main(int argc, char** argv)
 {
-  if ( (argc < 2) ||
+  if ( (argc < 3) ||
   ((strcmp("/dev/ttyS0", argv[1])!=0) &&
   (strcmp("/dev/ttyS1", argv[1])!=0) &&
   (strcmp("/dev/ttyS2", argv[1])!=0) )) {
@@ -16,12 +17,23 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  int fd = llopen(argv[1], TRANSMITTER);
+  char file_content[MAX_DATA_LEN];
 
-  llwrite(fd, "Penguin goes next", 23);
-  
-  llclose(fd);
+  // Open file to be sent
+	FILE* file = fopen(argv[2], "r");
+	if (!file) {
+		printf("ERROR: File: %s could not be opened.\n", argv[2]);
+		return -1;
+	}
+  int i = 0;
 
+  while (!feof(file)) {
+      i += fread(file_content, 1, sizeof(file_content), file);
+  }
+
+  printf("%d\n", i);
+
+  send_file(argv[1], argv[2], file_content, i);
 
   return 0;
 }

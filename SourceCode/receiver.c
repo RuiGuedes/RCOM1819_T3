@@ -5,6 +5,7 @@
 
 #include "serialconfig.h"
 #include "datalink.h"
+#include "application.h"
 
 int main(int argc, char** argv)
 {
@@ -16,14 +17,24 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  char buffer[255];
-  int fd = llopen(argv[1], RECEIVER);
+  char * filename = NULL;
+  unsigned int * file_length = NULL;
+  char buffer[MAX_DATA_LEN];
 
-  llread(fd, buffer);
+  receive_file(argv[1], filename, buffer, file_length);
+
+  // Open file to be sent
+	FILE* file = fopen(filename, "w");
+	if (!file) {
+		printf("ERROR: File: %s could not be opened.\n", argv[2]);
+		return -1;
+	}
+
+  for(int i = 0; i < *file_length; i++) {
+    fwrite(buffer, 1, sizeof(buffer), file);
+  }
 
   printf("Message read: %s\n", buffer);
-
-  llclose(fd);
 
   return 0;
 }

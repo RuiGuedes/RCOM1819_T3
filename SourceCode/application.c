@@ -122,3 +122,43 @@ int receive_data_packet(int fd, char * buffer, int * buf_len) {
 
    return N;
 }
+
+int send_file(char * port, char * filename, char * file_content, int length){
+
+  // Establish connection
+  int fd = llopen(port, TRANSMITTER);
+
+  // Determines beggining of file transfer
+  send_control_packet(fd, START_C, filename, length);
+
+  // Transfer file data
+  send_data_packet(fd, 1, file_content, length);
+
+  // Determines ending of file transfer
+  send_control_packet(fd, END_C, filename, length);
+
+  // Terminates connection
+  llclose(fd);
+
+	return 1;
+}
+
+int receive_file(char * port, char * filename, char * buffer, unsigned int * file_length){
+
+  // Establish connection
+  int fd = llopen(port, RECEIVER);
+
+  // Determines beggining of file transfer
+  receive_control_packet(fd, START_C, filename, file_length);
+
+  // Receives file
+  receive_data_packet(fd, buffer, (int *)file_length);
+
+  // Determines ending of file transfer
+  receive_control_packet(fd, END_C, filename, file_length);
+
+  // Terminates connection
+  llclose(fd);
+
+  return 0;
+}
