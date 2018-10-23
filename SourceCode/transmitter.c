@@ -19,8 +19,9 @@ int main(int argc, char** argv)
   int fd = llopen(argv[1], TRANSMITTER);
 
   llwrite(fd, "Penguin goes next", 23);
-
+  
   llclose(fd);
+
 
   return 0;
 }

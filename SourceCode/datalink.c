@@ -214,7 +214,7 @@ int llwrite(int fd, char * buffer, int length) {
 int send_data_frame(int fd, char * buffer, int length) {
   unsigned int index = 4;
   unsigned char frame[DATA_FRAME_LEN + length*2], bbc2 = 0;
-
+  
   frame[0] = FLAG;
   frame[1] = TRANS_A;
   frame[2] = DATA_C;
