@@ -8,8 +8,6 @@
 //      - Não facam refactoring sem ter a certeza das implicações                                                                                              //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//TODO: Na função send_file verificar a utilidade do numero de sequencia
-//TODO: Tanto na função send file como receive_file adicionar condições para situações de erro (return -1)
 //TODO: Verificar as restantes funções para ver se não estamos a esquecer de nada
 
 int send_control_packet(int fd, int type, char * filename, unsigned int length) {
@@ -17,7 +15,7 @@ int send_control_packet(int fd, int type, char * filename, unsigned int length) 
   //int num_written_bytes = 0;
   char packet[CONTROL_PACKET_LEN + sizeof(filename) + sizeof(length)];
 
-  if(sizeof(filename) > 255) {
+  if(strlen(filename) > 254) {
       printf("Filename: %s too large to fit in packet.\n", filename);
       return -1;
   }
@@ -32,8 +30,8 @@ int send_control_packet(int fd, int type, char * filename, unsigned int length) 
   packet[index++] = (length >> 24) & 0xFF;
 
   packet[index++] = FILENAME_T;
-  packet[index++] = strlen(filename);
-  for(int i = 0; i < strlen(filename); i++) {
+  packet[index++] = strlen(filename) + 1;
+  for(int i = 0; i <= strlen(filename); i++) {
       packet[index++] = filename[i];
   }
 
@@ -93,18 +91,22 @@ int receive_control_packet(int fd, int type, char * filename, unsigned int * fil
 }
 
 int send_data_packet(int fd, int N, char * buffer, unsigned int length) {
-  unsigned int index = 0;
-  char packet[DATA_PACKET_LEN + length];
-
-  if((length/256) > 255) {
+  if (length > MAX_DATA_LEN) { // Changing this condition could be a likely reason for bug
     printf("Length overflow\n");
     return -1;
   }
+  else if (length == 0) {
+    // Could happen for some reason, best to not do anything in this case
+    return 0;
+  }
+
+  unsigned int index = 0;
+  char packet[DATA_PACKET_LEN + length];
 
   packet[index++] = DATA_C;
   packet[index++] = N;
-  packet[index++] = (char)(length/256);
-  packet[index++] = (char)(length%256);
+  packet[index++] = (char)(length / 256);
+  packet[index++] = (char)(length % 256);
 
   for(int i = 0; i < length; i++) {
     packet[index++] = buffer[i];
@@ -126,7 +128,7 @@ int receive_data_packet(int fd, char * buffer, int * buf_len) {
 
    int N = packet[index++];
 
-   *buf_len = 256*(unsigned char)(packet[index]) + (unsigned char)(packet[index+1]);
+   *buf_len = 256 * (unsigned char)(packet[index]) + (unsigned char)(packet[index+1]);
    index += 2;
 
    for(int i = 0; i < *buf_len; i++) {
@@ -142,33 +144,81 @@ int send_file(char * port, char * filename, char * file_content, int length){
   int fd = llopen(port, TRANSMITTER);
 
   // Determines beggining of file transfer
-  send_control_packet(fd, START_C, filename, length);
+  if (send_control_packet(fd, START_C, filename, length) < 0) {
+    // Error processing occurs here (if any)
+    return -1;
+  }
 
-  // Transfer file data
-  send_data_packet(fd, 1, file_content, length);
+
+  // Transfer file data (Considering the Max Data Bytes per Packet defined in the header)
+  unsigned int sent_bytes = 0, packet_i = 0;
+
+  while (sent_bytes + MAX_DATA_LEN <= length) {
+    int packet_status = send_data_packet(fd, packet_i++, file_content + sent_bytes, MAX_DATA_LEN);
+
+    if (packet_status < 0) { // Error Occured (Any processing of the error occurs within this if)
+      return packet_status;
+    }
+
+    sent_bytes += MAX_DATA_LEN;
+  }
+
+  int packet_status = send_data_packet(fd, packet_i++, file_content + sent_bytes, length - sent_bytes); 
+
+  if (packet_status < 0) {
+    return packet_status;
+  }
+
 
   // Determines ending of file transfer
-  send_control_packet(fd, END_C, filename, length);
+  if (send_control_packet(fd, END_C, filename, length) < 0) {
+    // Error processing occurs here (if any)
+    return -1;
+  }
 
   // Terminates connection
   llclose(fd);
 
-	return 1;
+	return packet_i; // Return number of packets sent
 }
 
-int receive_file(char * port, char * filename, char * buffer, unsigned int * file_length){
+int receive_file(char * port, char * filename, char * buffer, unsigned int * file_length) {
 
   // Establish connection
   int fd = llopen(port, RECEIVER);
 
   // Determines beggining of file transfer
-  receive_control_packet(fd, START_C, filename, file_length);
+  if (receive_control_packet(fd, START_C, filename, file_length) < 0) {
+    // Error processing occurs here (if any)
+    return -1;
+  }
+
 
   // Receives file
   receive_data_packet(fd, buffer, (int *)file_length);
 
+  unsigned int received_bytes = 0, packet_i = 0;
+
+  while (received_bytes < *file_length) {
+    int packet_bytes = 0;
+
+    int packet_status = receive_data_packet(fd, buffer + received_bytes, &packet_bytes); 
+
+    if (packet_status < 0 || packet_status != packet_i++) {
+      // Error processing occurs here (if any)
+      return -1;
+    }
+
+    received_bytes += packet_bytes;
+  }
+  // if received_bytes becomes larger than file_length then we had a memory leak (penguin.gif < MAX_DATA_LEN so no worries there since it only sends one packet)
+
+
   // Determines ending of file transfer
-  receive_control_packet(fd, END_C, filename, file_length);
+  if (receive_control_packet(fd, END_C, filename, file_length) < 0) {
+    // Error processing occurs here (if any)
+    return -1;
+  }
 
   // Terminates connection
   llclose(fd);
