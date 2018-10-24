@@ -70,8 +70,8 @@ int receive_control_packet(int fd, int type, char * filename, unsigned int * fil
           case FILESIZE_T:
             tmp_length = buffer[index++];
             *file_length = ((buffer[index+3] << 24) | 0x00FFFFFF) & *file_length;
-            *file_length = ((buffer[index+2] << 16) | 0x00FFFFFF) & *file_length;
-            *file_length = ((buffer[index+1] << 8) | 0x00FFFFFF) & *file_length;
+            *file_length = ((buffer[index+2] << 16) | 0x0000FFFF) & *file_length;
+            *file_length = ((buffer[index+1] << 8) | 0x000000FF) & *file_length;
             *file_length = buffer[index] & *file_length;
             index += tmp_length;
           break;
@@ -91,13 +91,12 @@ int receive_control_packet(int fd, int type, char * filename, unsigned int * fil
 }
 
 int send_data_packet(int fd, int N, char * buffer, unsigned int length) {
-  if (length > MAX_DATA_LEN) { // Changing this condition could be a likely reason for bug
+  if (length > MAX_DATA_LEN) {
     printf("Length overflow\n");
     return -1;
   }
   else if (length == 0) {
-    // Could happen for some reason, best to not do anything in this case
-    return 0;
+    return 0; // For safety reasons, best to not do anything in this case
   }
 
   unsigned int index = 0;
@@ -122,7 +121,7 @@ int receive_data_packet(int fd, char * buffer, int * buf_len) {
    llread(fd, packet);
 
    if(packet[index++] != DATA_C) {
-     printf("Wrong packet received.\n");
+     printf("Wrong packet received. Should receive a data packet.\n");
      return -1;
    }
 
@@ -145,10 +144,8 @@ int send_file(char * port, char * filename, char * file_content, int length){
 
   // Determines beggining of file transfer
   if (send_control_packet(fd, START_C, filename, length) < 0) {
-    // Error processing occurs here (if any)
-    return -1;
+    return -1;  // Error processing occurs here (if any)
   }
-
 
   // Transfer file data (Considering the Max Data Bytes per Packet defined in the header)
   unsigned int sent_bytes = 0, packet_i = 0;
@@ -163,17 +160,15 @@ int send_file(char * port, char * filename, char * file_content, int length){
     sent_bytes += MAX_DATA_LEN;
   }
 
-  int packet_status = send_data_packet(fd, packet_i++, file_content + sent_bytes, length - sent_bytes); 
+  int packet_status = send_data_packet(fd, packet_i++, file_content + sent_bytes, length - sent_bytes);
 
   if (packet_status < 0) {
     return packet_status;
   }
 
-
   // Determines ending of file transfer
   if (send_control_packet(fd, END_C, filename, length) < 0) {
-    // Error processing occurs here (if any)
-    return -1;
+    return -1;  // Error processing occurs here (if any)
   }
 
   // Terminates connection
@@ -189,20 +184,16 @@ int receive_file(char * port, char * filename, char * buffer, unsigned int * fil
 
   // Determines beggining of file transfer
   if (receive_control_packet(fd, START_C, filename, file_length) < 0) {
-    // Error processing occurs here (if any)
-    return -1;
+    return -1;  // Error processing occurs here (if any)
   }
 
-
   // Receives file
-  receive_data_packet(fd, buffer, (int *)file_length);
-
   unsigned int received_bytes = 0, packet_i = 0;
 
   while (received_bytes < *file_length) {
     int packet_bytes = 0;
 
-    int packet_status = receive_data_packet(fd, buffer + received_bytes, &packet_bytes); 
+    int packet_status = receive_data_packet(fd, buffer + received_bytes, &packet_bytes);
 
     if (packet_status < 0 || packet_status != packet_i++) {
       // Error processing occurs here (if any)
@@ -211,13 +202,10 @@ int receive_file(char * port, char * filename, char * buffer, unsigned int * fil
 
     received_bytes += packet_bytes;
   }
-  // if received_bytes becomes larger than file_length then we had a memory leak (penguin.gif < MAX_DATA_LEN so no worries there since it only sends one packet)
-
 
   // Determines ending of file transfer
   if (receive_control_packet(fd, END_C, filename, file_length) < 0) {
-    // Error processing occurs here (if any)
-    return -1;
+    return -1;  // Error processing occurs here (if any)
   }
 
   // Terminates connection
