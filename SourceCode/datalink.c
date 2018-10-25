@@ -54,6 +54,7 @@ int llopen(char *port, int user) {
         }
         else {
           printf("UA Command not received. Attempting to reconnect.\n");
+          alarm(0); flag = 1;
         }
       }
 
@@ -176,6 +177,10 @@ int llwrite(int fd, char * buffer, int length) {
       flag = 0;
     }
 
+    // Reset variables
+    alarm(0);
+    flag = 1;
+
     //Check for receiver response
     unsigned char command = receive_control_frame(fd, TRANS_A);
 
@@ -214,7 +219,7 @@ int llwrite(int fd, char * buffer, int length) {
 int send_data_frame(int fd, char * buffer, int length) {
   unsigned int index = 4;
   unsigned char frame[DATA_FRAME_LEN + length*2], bbc2 = 0;
-  
+
   frame[0] = FLAG;
   frame[1] = TRANS_A;
   frame[2] = DATA_C;
