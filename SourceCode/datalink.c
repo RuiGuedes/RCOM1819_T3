@@ -177,12 +177,12 @@ int llwrite(int fd, char * buffer, int length) {
       flag = 0;
     }
 
+    //Check for receiver response
+    unsigned char command = receive_control_frame(fd, TRANS_A);
+
     // Reset variables
     alarm(0);
     flag = 1;
-
-    //Check for receiver response
-    unsigned char command = receive_control_frame(fd, TRANS_A);
 
     switch(command) {
       case RR_C0:
