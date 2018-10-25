@@ -20,7 +20,6 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  int status;
   struct stat buffer;
   int length = 0;
 

@@ -198,6 +198,7 @@ int receive_file(char * port) {
     int packet_bytes = 0;
 
     int packet_status = receive_data_packet(fd, buffer + received_bytes, &packet_bytes);
+    printf("Data packet received.\n");
 
     if (packet_status < 0 || packet_status != packet_i++) {
       // Error processing occurs here (if any)
