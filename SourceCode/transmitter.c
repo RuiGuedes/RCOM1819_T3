@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "serialconfig.h"
 #include "datalink.h"
@@ -17,6 +20,8 @@ int main(int argc, char** argv)
     exit(1);
   }
 
+  int status;
+  struct stat buffer;
   int length = 0;
 
   // Open file to be sent
@@ -27,9 +32,8 @@ int main(int argc, char** argv)
 	}
 
   // Get file size
-  fseek(file, 0L, SEEK_END);
-  int size = ftell(file);
-  rewind(file);
+  stat(argv[2], &buffer);
+  int size = buffer.st_size;
 
   char file_content[size];
 

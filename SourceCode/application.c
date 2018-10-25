@@ -177,20 +177,24 @@ int send_file(char * port, char * filename, char * file_content, int length){
 	return packet_i; // Return number of packets sent
 }
 
-int receive_file(char * port, char * filename, char * buffer, unsigned int * file_length) {
+int receive_file(char * port) {
+  // Local variables
+  char filename[255];
+  unsigned int file_length = 0;
 
   // Establish connection
   int fd = llopen(port, RECEIVER);
 
   // Determines beggining of file transfer
-  if (receive_control_packet(fd, START_C, filename, file_length) < 0) {
+  if (receive_control_packet(fd, START_C, filename, &file_length) < 0) {
     return -1;  // Error processing occurs here (if any)
   }
 
   // Receives file
+  char buffer[file_length];
   unsigned int received_bytes = 0, packet_i = 0;
 
-  while (received_bytes < *file_length) {
+  while (received_bytes < file_length) {
     int packet_bytes = 0;
 
     int packet_status = receive_data_packet(fd, buffer + received_bytes, &packet_bytes);
@@ -204,12 +208,24 @@ int receive_file(char * port, char * filename, char * buffer, unsigned int * fil
   }
 
   // Determines ending of file transfer
-  if (receive_control_packet(fd, END_C, filename, file_length) < 0) {
+  if (receive_control_packet(fd, END_C, filename, &file_length) < 0) {
     return -1;  // Error processing occurs here (if any)
   }
 
   // Terminates connection
   llclose(fd);
+
+  // Open file to be sent
+  FILE* file = fopen(filename, "w");
+  if (!file) {
+    printf("ERROR: File: %s could not be opened.\n", filename);
+    return -1;
+  }
+
+  // Write content to file
+  for(int i = 0; i < file_length; i++) {
+    fwrite(buffer+i, 1, 1, file);
+  }
 
   return 0;
 }

@@ -27,6 +27,6 @@ int receive_data_packet(int fd, char * buffer, int * buf_len);
 
 int send_file(char * port, char * filename, char * file_content, int length);
 
-int receive_file(char * port, char * filename, char * buffer, unsigned int * file_length);
+int receive_file(char * port);
 
 #endif
