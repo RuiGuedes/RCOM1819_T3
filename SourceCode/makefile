@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -std=c99 -Wall
 DEPS = datalink.h serialconfig.h application.h
 TRANSMITTER_OBJ = transmitter.o serialconfig.o datalink.o application.o
 RECEIVER_OBJ = receiver.o serialconfig.o datalink.o application.o

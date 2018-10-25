@@ -3,6 +3,7 @@
 #define SERIAL_CONFIG_H
 
 #include <termios.h>
+#include <strings.h>
 
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
