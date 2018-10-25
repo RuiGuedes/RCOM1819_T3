@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 
   char filename[255];
   unsigned int file_length = 0;
-  char buffer[MAX_DATA_LEN];
+  char buffer[file_length];
 
   receive_file(argv[1], filename, buffer, &file_length);
 

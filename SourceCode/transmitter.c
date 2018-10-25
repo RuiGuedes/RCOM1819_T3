@@ -18,7 +18,6 @@ int main(int argc, char** argv)
   }
 
   int length = 0;
-  char file_content[MAX_DATA_LEN];
 
   // Open file to be sent
 	FILE* file = fopen(argv[2], "r");
@@ -26,6 +25,13 @@ int main(int argc, char** argv)
 		printf("ERROR: File: %s could not be opened.\n", argv[2]);
 		return -1;
 	}
+
+  // Get file size
+  fseek(file, 0L, SEEK_END);
+  int size = ftell(file);
+  rewind(file);
+
+  char file_content[size];
 
   while (!feof(file)) {
       length += fread(file_content, 1, sizeof(file_content), file);
