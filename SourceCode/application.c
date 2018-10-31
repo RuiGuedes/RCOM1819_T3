@@ -89,7 +89,7 @@ int send_data_packet(int fd, unsigned int N, char * buffer, unsigned int length)
   char packet[DATA_PACKET_LEN + length];
 
   packet[index++] = DATA_C;
-  packet[index++] = N;
+  packet[index++] = (unsigned char) N;
   packet[index++] = (char)(length / 256);
   packet[index++] = (char)(length % 256);
 
@@ -111,7 +111,7 @@ unsigned int receive_data_packet(int fd, char * buffer, int * buf_len) {
      return -1;
    }
 
-   unsigned int N = packet[index++];
+   unsigned int N = (unsigned char) packet[index++];
 
    *buf_len = 256 * (unsigned char)(packet[index]) + (unsigned char)(packet[index+1]);
    index += 2;
@@ -188,14 +188,14 @@ int receive_file(char * port) {
     int packet_bytes = 0;
 
     unsigned int packet_status = receive_data_packet(fd, buffer + received_bytes, &packet_bytes);
-    printf("Data packet received.\n");
 
-    if (packet_status < 0 || packet_status != packet_i++) {
+    if (packet_status < 0 || packet_status != packet_i++ % 256) {
       // Error processing occurs here (if any)
       return -1;
     }
 
     received_bytes += packet_bytes;
+	printf("Data packet received: %d bytes of %d.\n", received_bytes, file_length);
   }
 
   // Determines ending of file transfer
