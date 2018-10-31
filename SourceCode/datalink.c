@@ -298,6 +298,7 @@ int llread(int fd, char* buffer) {
 int receive_data_frame(int fd, unsigned char * data_c, char * data) {
   unsigned int index = 0;
   unsigned char byte, bbc2 = 0;
+  char buffer[MAX_DATA_LEN];
 
   enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
   enum set_states state = START;
@@ -356,7 +357,7 @@ int receive_data_frame(int fd, unsigned char * data_c, char * data) {
           }
 
           bbc2 ^= byte;
-          data[index++] = byte;
+          buffer[index++] = byte;
         }
       break;
       case END:
@@ -365,6 +366,15 @@ int receive_data_frame(int fd, unsigned char * data_c, char * data) {
   }
 
   if(bbc2 == 0) {
+    if(DATA_C == *data_c) { // In case of valid data (valid data frame and not duplicated) stores content transmitted
+      unsigned int iterator = 0;
+
+      while(iterator <= (index - 1)) {
+        data[iterator] = buffer[iterator];
+        iterator++;
+      }
+    }
+
     return (index - 1);
   }
 

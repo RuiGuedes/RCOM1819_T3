@@ -28,9 +28,9 @@
 
 
 // FRAME SEND AND RECEIVER FUNCTIONS
-#define CTRL_FRAME_LEN   5 // Length of the control frame (in bytes)
-#define DATA_FRAME_LEN   7 // Length of the data frame header and trailer (in bytes)
-
+#define CTRL_FRAME_LEN   5     // Length of the control frame (in bytes)
+#define DATA_FRAME_LEN   7     // Length of the data frame header and trailer (in bytes)
+#define MAX_DATA_LEN     65535 // Max data length to be sent in on packet: 2^16.
 // Global variables
 extern int flag, attempts, DATA_C;
 
