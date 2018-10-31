@@ -44,7 +44,7 @@ int receive_control_packet(int fd, int type, char * filename, unsigned int * fil
     Argument 'buffer': content to be transmitted
     Argument 'length': size of the content to be transmitted
 */
-int send_data_packet(int fd, int N, char * buffer, unsigned int length);
+int send_data_packet(int fd, unsigned int N, char * buffer, unsigned int length);
 
 /*
     Receives data packet containing file content (partial or integral)
@@ -53,7 +53,7 @@ int send_data_packet(int fd, int N, char * buffer, unsigned int length);
     Argument 'buffer': buffer where content transmitted will be stored
     Argument 'length': size of the content received
 */
-int receive_data_packet(int fd, char * buffer, int * buf_len);
+unsigned int receive_data_packet(int fd, char * buffer, int * buf_len);
 
 /*
     Function responsible to send a certain file

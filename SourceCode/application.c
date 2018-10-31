@@ -76,7 +76,7 @@ int receive_control_packet(int fd, int type, char * filename, unsigned int * fil
 ///////////////////////// Data Packet Functions /////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
 
-int send_data_packet(int fd, int N, char * buffer, unsigned int length) {
+int send_data_packet(int fd, unsigned int N, char * buffer, unsigned int length) {
   if (length > MAX_DATA_LEN) {
     printf("Length overflow\n");
     return -1;
@@ -100,7 +100,7 @@ int send_data_packet(int fd, int N, char * buffer, unsigned int length) {
   return llwrite(fd, packet, index);
 }
 
-int receive_data_packet(int fd, char * buffer, int * buf_len) {
+unsigned int receive_data_packet(int fd, char * buffer, int * buf_len) {
    unsigned int index = 0;
    char packet[DATA_PACKET_LEN + MAX_DATA_LEN];
 
@@ -111,7 +111,7 @@ int receive_data_packet(int fd, char * buffer, int * buf_len) {
      return -1;
    }
 
-   int N = packet[index++];
+   unsigned int N = packet[index++];
 
    *buf_len = 256 * (unsigned char)(packet[index]) + (unsigned char)(packet[index+1]);
    index += 2;
@@ -187,7 +187,7 @@ int receive_file(char * port) {
   while (received_bytes < file_length) {
     int packet_bytes = 0;
 
-    int packet_status = receive_data_packet(fd, buffer + received_bytes, &packet_bytes);
+    unsigned int packet_status = receive_data_packet(fd, buffer + received_bytes, &packet_bytes);
     printf("Data packet received.\n");
 
     if (packet_status < 0 || packet_status != packet_i++) {
