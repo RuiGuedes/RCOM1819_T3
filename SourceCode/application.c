@@ -195,7 +195,7 @@ int receive_file(char * port) {
     }
 
     received_bytes += packet_bytes;
-	printf("Data packet received: %d bytes of %d.\n", received_bytes, file_length);
+	  printf("Data packet received: %d bytes of %d.\n", received_bytes, file_length);
   }
 
   // Determines ending of file transfer
