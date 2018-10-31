@@ -5,7 +5,7 @@
 #define CONTROL_PACKET_LEN 5
 #define DATA_PACKET_LEN 4
 
-#define MAX_DATA_LEN 65535 // Max data length to be sent in on packet: 2^16.
+#define MAX_DATA_LEN 100 // Max data length to be sent in on packet: 2^16.
 
 #define DATA_C 1
 #define START_C 2

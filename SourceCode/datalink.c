@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/types.h>
 
 #include "datalink.h"
 #include "serialconfig.h"
@@ -30,10 +31,20 @@ int llopen(char *port, int user) {
   userType = user;
   int fd = init_serial_n_canon(port);
 
+  if(userType == TRANSMITTER) {
+
+    struct sigaction sa;
+    memset(&sa, 0, sizeof sa);
+    sa.sa_handler = manage_alarm;
+
+    sigaction(SIGALRM, &sa, NULL);
+
+  }
+
   switch(userType) {
     case TRANSMITTER:
       //Manage alarm interruptions
-      signal(SIGALRM, manage_alarm);
+      //signal(SIGALRM, manage_alarm);
 
       while (attempts < 4) {
         // Send SET command
