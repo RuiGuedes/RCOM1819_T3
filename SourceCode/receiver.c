@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "serialconfig.h"
 #include "datalink.h"
@@ -22,7 +23,15 @@ int main(int argc, char** argv)
     exit(1);
   }
 
+  clock_t begin = clock();
+
   receive_file(argv[1]);
+
+  clock_t end = clock();
+
+  double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+  printf("Execution time: %lf\n", time_spent);
 
   return 0;
 }
