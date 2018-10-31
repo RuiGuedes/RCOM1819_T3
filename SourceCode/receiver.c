@@ -21,17 +21,13 @@ int main(int argc, char** argv)
   (strcmp("/dev/ttyS2", argv[1])!=0) )) {
     printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
     exit(1);
-  }
+  }	
 
-  clock_t begin = clock();
+	time_t begin = time(NULL);
 
-  receive_file(argv[1]);
+	receive_file(argv[1]);
 
-  clock_t end = clock();
-
-  double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-  printf("Execution time: %lf\n", time_spent);
+	printf("Execution time: %f\n", difftime(time(NULL), begin));
 
   return 0;
 }
