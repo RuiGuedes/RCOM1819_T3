@@ -7,6 +7,11 @@
 #include "datalink.h"
 #include "application.h"
 
+/*
+    Main function of receiver
+
+    Brief: Validates function call and call the respective function to receive a certain file via serial port.
+*/
 int main(int argc, char** argv)
 {
   if ( (argc < 2) ||

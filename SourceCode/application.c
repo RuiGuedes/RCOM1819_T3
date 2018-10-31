@@ -3,16 +3,12 @@
 #include "datalink.h"
 #include "application.h"
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// NOTA - Neste momento a transferência de ficheiro está a funcionar, qualquer alteração só é validada caso a transferência de ficheiros se mantenham correta. //
-//      - Não facam refactoring sem ter a certeza das implicações                                                                                              //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//TODO: Verificar as restantes funções para ver se não estamos a esquecer de nada
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////// Control Packet Functions /////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 int send_control_packet(int fd, int type, char * filename, unsigned int length) {
-  unsigned int index = 0; //, attempts = 0;
-  //int num_written_bytes = 0;
+  unsigned int index = 0;
   char packet[CONTROL_PACKET_LEN + sizeof(filename) + sizeof(length)];
 
   if(strlen(filename) > 254) {
@@ -34,20 +30,6 @@ int send_control_packet(int fd, int type, char * filename, unsigned int length) 
   for(int i = 0; i <= strlen(filename); i++) {
       packet[index++] = filename[i];
   }
-
-  /*while (num_written_bytes < sizeof(packet) && attempts < MAX_ATTEMPTS) {
-    int tmp_written_bytes = llwrite(fd, packet + num_written_bytes, sizeof(packet) - num_written_bytes);
-
-    if(tmp_written_bytes > 0) {
-      num_written_bytes += tmp_written_bytes;
-    }
-    else {
-      attempts++;
-    }
-  }
-
-  return num_written_bytes;
-  */
 
   return llwrite(fd, packet, index);
 }
@@ -89,6 +71,10 @@ int receive_control_packet(int fd, int type, char * filename, unsigned int * fil
 
     return 0;
 }
+
+/////////////////////////////////////////////////////////////////////////////
+///////////////////////// Data Packet Functions /////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
 int send_data_packet(int fd, int N, char * buffer, unsigned int length) {
   if (length > MAX_DATA_LEN) {
@@ -136,6 +122,10 @@ int receive_data_packet(int fd, char * buffer, int * buf_len) {
 
    return N;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////// API application functions /////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 int send_file(char * port, char * filename, char * file_content, int length){
 

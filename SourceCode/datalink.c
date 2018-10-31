@@ -9,14 +9,13 @@
 #include <stdio.h>
 
 // Init global variables
-
 int userType;
 int flag = 1;
 int attempts = 1;
 int DATA_C = DATA_C0;
 
 /*
-Manages alarm interruptions
+    Manages alarm interruptions
 */
 void manage_alarm() {
   flag=1;
@@ -258,11 +257,9 @@ int send_data_frame(int fd, char * buffer, int length) {
   return write_serial(fd, frame, index);
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Data Transmission - Receiver /////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
 
 int llread(int fd, char* buffer) {
   int length;
@@ -297,7 +294,6 @@ int llread(int fd, char* buffer) {
 
   return length;
 }
-
 
 int receive_data_frame(int fd, unsigned char * data_c, char * data) {
   unsigned int index = 0;

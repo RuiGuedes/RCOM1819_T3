@@ -10,6 +10,11 @@
 #include "datalink.h"
 #include "application.h"
 
+/*
+    Main function of transmitter.
+    
+    Brief: It opens, reads and stores the file content, which name is passed by parameter, and sends it to the serial port also passed by parameter.
+*/
 int main(int argc, char** argv)
 {
   if ( (argc < 3) ||
