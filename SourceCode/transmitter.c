@@ -43,18 +43,6 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  // Display's initial information
-
-  printf("\n#################\n");
-  printf("## TRANSMITTER ##\n");
-  printf("#################\n\n");
-
-  printf("--- Settings ---\n\n");
-  printf("Serial port: %s\n", argv[1]);
-  printf("Max attempts: %d\n", 3);
-  printf("Timeout: %d seconds\n", 3);
-  printf("File to be transmitted: %s\n\n", argv[2]);
-
   // Open file to be sent
   struct stat buffer;
   int length = 0;
@@ -74,6 +62,19 @@ int main(int argc, char** argv)
   while (!feof(file)) {
       length += fread(file_content, 1, sizeof(file_content), file);
   }
+
+  // Display's initial information
+  printf("\n#################\n");
+  printf("## TRANSMITTER ##\n");
+  printf("#################\n\n");
+
+  printf("--- Settings ---\n\n");
+  printf("Serial port: %s\n", argv[1]);
+  printf("Max attempts: %d\n", 3);
+  printf("Timeout: %d seconds\n", 3);
+  printf("File to be transmitted: %s\n", argv[2]);
+  printf("File size: %d bytes\n\n", length);
+
 
   send_file(argv[1], argv[2], file_content, length);
 

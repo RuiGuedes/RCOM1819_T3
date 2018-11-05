@@ -132,14 +132,17 @@ int send_file(char * port, char * filename, char * file_content, int length){
   // Establish connection
   int fd = llopen(port, TRANSMITTER);
 
+  // In case connection establishement fails
   if(fd < 0)
     return -1;
 
   // Determines beggining of file transfer
+  printf("--- Beggining file transfer --- \n\n");
   if (send_control_packet(fd, START_C, filename, length) < 0) {
     return -1;  // Error processing occurs here (if any)
   }
 
+  printf("Data transmitted: 0 bytes of %d.\n", length);
   // Transfer file data (Considering the Max Data Bytes per Packet defined in the header)
   unsigned int sent_bytes = 0, packet_i = 0;
 
@@ -151,10 +154,11 @@ int send_file(char * port, char * filename, char * file_content, int length){
     }
 
     sent_bytes += MAX_DATA_LEN;
+    printf("Data transmitted: %d bytes of %d.\n", sent_bytes, length);
   }
 
   int packet_status = send_data_packet(fd, packet_i++, file_content + sent_bytes, length - sent_bytes);
-
+  printf("Data transmitted: %d bytes of %d.\n", length, length);
   if (packet_status < 0) {
     return packet_status;
   }
@@ -165,6 +169,7 @@ int send_file(char * port, char * filename, char * file_content, int length){
   }
 
   // Terminates connection
+  printf("File transfer complete.\n\n--- Ending file transfer --- \n\n");
   llclose(fd);
 
 	return packet_i; // Return number of packets sent
@@ -179,6 +184,7 @@ int receive_file(char * port) {
   int fd = llopen(port, RECEIVER);
 
   // Determines beggining of file transfer
+  printf("--- Beggining file transfer --- \n\n");
   if (receive_control_packet(fd, START_C, filename, &file_length) < 0) {
     return -1;  // Error processing occurs here (if any)
   }
@@ -207,6 +213,7 @@ int receive_file(char * port) {
   }
 
   // Terminates connection
+  printf("\n--- Ending file transfer --- \n\n");
   llclose(fd);
 
   // Open file to be sent

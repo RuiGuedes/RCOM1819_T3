@@ -206,7 +206,7 @@ int llwrite(int fd, char * buffer, int length) {
       case REJ_C0:
         if(DATA_C == DATA_C1) {
           DATA_C = DATA_C0;
-          printf("Receiver ready. Data transmitted.\n");
+          printf("Receiver ready. ");
           return num_written_bytes;
         }
         else {
@@ -217,8 +217,8 @@ int llwrite(int fd, char * buffer, int length) {
       case REJ_C1:
         if(DATA_C == DATA_C0) {
           DATA_C = DATA_C1;
-          printf("Receiver ready. Data transmitted.\n");
-          return num_written_bytes;
+          printf("Receiver ready. ");
+          return 0;
         }
         else {
           printf("Reject. Attempting to retransmit data.\n");
@@ -404,6 +404,8 @@ int receive_data_frame(int fd, unsigned char * data_c, char * data) {
 ////////////////////////////////////////////////////////////////////////////////
 
 int llclose(int fd) {
+  printf("--- Connection Termination ---\n\n");
+
   // Reset global variables
   attempts = 1;
   flag = 1;
@@ -413,7 +415,7 @@ int llclose(int fd) {
       while (attempts < 4) {
         // Send SET command
         send_control_frame(fd, TRANS_A, DISC_C);
-        printf("DISC Command sent\n");
+        printf("DISC Command sent --> ");
 
         // Set alarm for 3 seconds
         if (flag){
@@ -425,16 +427,18 @@ int llclose(int fd) {
         if (receive_control_frame(fd, TRANS_A) ==  DISC_C) {
           printf("DISC Command received\n");
           send_control_frame(fd, TRANS_A, UA_C);
-          printf("UA Command sent\n");
+          printf("UA Command sent\n\n");
           break;
         }
         else {
-          printf("DISC Command not received. Attempting to retransmit command.\n");
+          printf("DISC Command not received: Attempting to retransmit command.\n");
         }
       }
 
-      if (attempts >= 4)
+      if (attempts >= 4) {
         printf("DISC Command not received\n");
+        return -1;
+      }
     break;
     case RECEIVER:
       // Setup receiving DISC message
@@ -443,7 +447,7 @@ int llclose(int fd) {
 
       // Send DISC response
       send_control_frame(fd, TRANS_A, DISC_C);
-      printf("DISC Command sent\n");
+      printf("DISC Command sent --> ");
 
       // Setup receiving UA message
       while (receive_control_frame(fd, TRANS_A) != UA_C);
@@ -455,6 +459,8 @@ int llclose(int fd) {
   }
 
   close_serial(fd, 2);
+
+  printf("--- Connection Terminated ---\n\n");
 
   return 0;
 }
