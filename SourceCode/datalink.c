@@ -387,7 +387,7 @@ int receive_data_frame(int fd, unsigned char * data_c, char * data) {
     if(DATA_C == *data_c) { // In case of valid data (valid data frame and not duplicated) stores content transmitted
       unsigned int iterator = 0;
 
-      while(iterator <= (index - 1)) {
+      while(iterator < (index - 1)) {
         data[iterator] = buffer[iterator];
         iterator++;
       }
