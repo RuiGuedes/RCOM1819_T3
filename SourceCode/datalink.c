@@ -316,7 +316,7 @@ int llread(int fd, char* buffer) {
 int receive_data_frame(int fd, unsigned char * data_c, char * data) {
   unsigned int index = 0;
   unsigned char byte, bbc2 = 0;
-  char buffer[MAX_DATA_LEN];
+  char buffer[MAX_DATA_LEN + 5];
 
   enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
   enum set_states state = START;
@@ -392,7 +392,7 @@ int receive_data_frame(int fd, unsigned char * data_c, char * data) {
         iterator++;
       }
     }
-    
+
     return (index - 1);
   }
 
