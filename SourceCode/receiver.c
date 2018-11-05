@@ -21,7 +21,16 @@ int main(int argc, char** argv)
   (strcmp("/dev/ttyS2", argv[1])!=0) )) {
     printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
     exit(1);
-  }	
+  }
+
+  // Display's initial information
+  printf("\n###############\n");
+  printf("## RECEIVER ##\n");
+  printf("###############\n\n");
+  printf("--- Settings ---\n\n");
+  printf("Serial port: %s\n", argv[1]);
+  printf("Max attempts: %d\n", 3);
+  printf("Timeout: %d seconds\n\n", 3);
 
 	time_t begin = time(NULL);
 

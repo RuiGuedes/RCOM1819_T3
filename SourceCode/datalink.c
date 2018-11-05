@@ -392,7 +392,7 @@ int receive_data_frame(int fd, unsigned char * data_c, char * data) {
         iterator++;
       }
     }
-
+    
     return (index - 1);
   }
 
@@ -451,7 +451,7 @@ int llclose(int fd) {
 
       // Setup receiving UA message
       while (receive_control_frame(fd, TRANS_A) != UA_C);
-      printf("UA Command received\n");
+      printf("UA Command received\n\n");
     break;
     default:
       return -1;
