@@ -12,7 +12,7 @@
 int init_serial_n_canon(char* serialpath) {
   int fd;
   struct termios newtio;
-
+  
   /*
   Open serial port device for reading and writing and not as controlling tty
   because we don't want to get killed if linenoise sends CTRL-C.

@@ -132,6 +132,9 @@ int send_file(char * port, char * filename, char * file_content, int length){
   // Establish connection
   int fd = llopen(port, TRANSMITTER);
 
+  if(fd < 0)
+    return -1;
+
   // Determines beggining of file transfer
   if (send_control_packet(fd, START_C, filename, length) < 0) {
     return -1;  // Error processing occurs here (if any)

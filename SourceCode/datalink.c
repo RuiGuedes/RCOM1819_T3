@@ -28,6 +28,8 @@ void manage_alarm() {
 ////////////////////////////////////////////////////////////////////////////////
 
 int llopen(char *port, int user) {
+  printf("--- Connection Establishment ---\n\n");
+
   userType = user;
   int fd = init_serial_n_canon(port);
 
@@ -43,13 +45,14 @@ int llopen(char *port, int user) {
 
   switch(userType) {
     case TRANSMITTER:
-      //Manage alarm interruptions
-      //signal(SIGALRM, manage_alarm);
 
       while (attempts < 4) {
+        //Reset alarm
+        alarm(0); flag = 1;
+
         // Send SET command
         send_control_frame(fd, TRANS_A, SET_C);
-        printf("SET Command sent\n");
+        printf("SET Command sent --> ");
 
         // Set alarm for 3 seconds
         if(flag){
@@ -63,18 +66,19 @@ int llopen(char *port, int user) {
           break;
         }
         else {
-          printf("UA Command not received. Attempting to reconnect.\n");
-          alarm(0); flag = 1;
+          printf("UA Command not received: Attempting to reconnect.\n");
         }
       }
 
-      if (attempts >= 4)
+      if (attempts >= 4) {
         printf("UA Command not received\n");
+        return -1;
+      }
     break;
     case RECEIVER:
       // Setup receiving SET message
       while(receive_control_frame(fd, TRANS_A) != SET_C);
-      printf("SET Command received\n");
+      printf("SET Command received --> ");
 
       // Send UA response
       send_control_frame(fd, TRANS_A, UA_C);
@@ -84,6 +88,9 @@ int llopen(char *port, int user) {
       return -1;
     break;
   }
+
+  printf("Connection established\n\n");
+
   return fd;
 }
 
