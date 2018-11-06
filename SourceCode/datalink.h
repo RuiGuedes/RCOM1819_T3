@@ -5,7 +5,7 @@
 #define TRANSMITTER 0
 #define RECEIVER    1
 
-#define FLAG      0x7
+#define FLAG      0x7E
 #define ESC       0x7D
 #define BST_BYTE  0x20
 
@@ -30,7 +30,7 @@
 // FRAME SEND AND RECEIVER FUNCTIONS
 #define CTRL_FRAME_LEN   5     // Length of the control frame (in bytes)
 #define DATA_FRAME_LEN   7     // Length of the data frame header and trailer (in bytes)
-#define MAX_DATA_LEN     150   // Max data length to be sent in on packet: 2^16
+#define MAX_DATA_LEN     100   // Max data length to be sent in on packet: 2^16
 #define FER              1     // Frame error probability
 
 // Global variables

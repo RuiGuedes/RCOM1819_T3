@@ -235,16 +235,16 @@ int llwrite(int fd, char * buffer, int length) {
 
 int send_data_frame(int fd, char * buffer, int length) {
   unsigned int index = 4;
-  unsigned char frame[DATA_FRAME_LEN + length*2], bbc2 = 0;
+  unsigned char frame[DATA_FRAME_LEN + length*2], bcc2 = 0;
 
   frame[0] = FLAG;
   frame[1] = TRANS_A;
   frame[2] = DATA_C;
   frame[3] = frame[1]^frame[2];
 
-  // Byte Stuffing - Data & BBC2
+  // Byte Stuffing - Data
   for(int i = 0; i < length; i++) {
-    bbc2 ^= buffer[i];
+    bcc2 ^= buffer[i];
 
     switch (buffer[i]) {
       case FLAG:
@@ -258,15 +258,15 @@ int send_data_frame(int fd, char * buffer, int length) {
     }
   }
 
-  // Byte Stuffing - BBC2
-  switch (bbc2) {
+  // Byte Stuffing - BCC2
+  switch (bcc2) {
     case FLAG:
     case ESC:
       frame[index++] = ESC;
-      frame[index++] = bbc2^BST_BYTE;
+      frame[index++] = bcc2^BST_BYTE;
     break;
     default:
-      frame[index++] = bbc2;
+      frame[index++] = bcc2;
     break;
   }
 
@@ -282,7 +282,7 @@ int send_data_frame(int fd, char * buffer, int length) {
 int llread(int fd, char* buffer) {
   int length;
   unsigned char data_c, tmp_data_c = DATA_C, command;
-  
+
   while(tmp_data_c == DATA_C) {
     length = receive_data_frame(fd, &data_c, buffer);
 
@@ -318,7 +318,7 @@ int llread(int fd, char* buffer) {
 
 int receive_data_frame(int fd, unsigned char * data_c, char * data) {
   unsigned int index = 0;
-  unsigned char byte, bbc2 = 0;
+  unsigned char byte, bcc2 = 0;
   char buffer[MAX_DATA_LEN + 5];
 
   enum set_states {START, FLAG_REC, A_REC, C_REC, BCC_OK, END};
@@ -377,7 +377,7 @@ int receive_data_frame(int fd, unsigned char * data_c, char * data) {
             byte ^= BST_BYTE;
           }
 
-          bbc2 ^= byte;
+          bcc2 ^= byte;
           buffer[index++] = byte;
         }
       break;
@@ -386,7 +386,7 @@ int receive_data_frame(int fd, unsigned char * data_c, char * data) {
     }
   }
 
-  if(bbc2 == 0) {
+  if(bcc2 == 0) {
     if(DATA_C == *data_c) { // In case of valid data (valid data frame and not duplicated) stores content transmitted
       unsigned int iterator = 0;
 
