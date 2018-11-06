@@ -282,7 +282,7 @@ int send_data_frame(int fd, char * buffer, int length) {
 int llread(int fd, char* buffer) {
   int length;
   unsigned char data_c, tmp_data_c = DATA_C, command;
-
+  
   while(tmp_data_c == DATA_C) {
     length = receive_data_frame(fd, &data_c, buffer);
 

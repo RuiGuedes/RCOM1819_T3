@@ -51,11 +51,10 @@ int receive_control_packet(int fd, int type, char * filename, unsigned int * fil
         switch (buffer[index++]) {
           case FILESIZE_T:
             tmp_length = buffer[index++];
-            *file_length = ((buffer[index+3] << 24) | 0x00FFFFFF) & *file_length;
-            *file_length = ((buffer[index+2] << 16) | 0x0000FFFF) & *file_length;
-            *file_length = ((buffer[index+1] << 8) | 0x000000FF) & *file_length;
-            *file_length = buffer[index] & *file_length;
-            index += tmp_length;
+            *file_length = (buffer[index++] | 0xFFFFFF00) & *file_length;
+            *file_length = ((buffer[index++] << 8) | 0xFFFF00FF) & *file_length;
+            *file_length = ((buffer[index++] << 16) | 0xFF00FFFF) & *file_length;
+            *file_length = ((buffer[index++] << 24) | 0x00FFFFFF) & *file_length;
           break;
           case FILENAME_T:
             tmp_length = buffer[index++];

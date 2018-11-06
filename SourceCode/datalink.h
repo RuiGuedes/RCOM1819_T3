@@ -31,7 +31,7 @@
 #define CTRL_FRAME_LEN   5     // Length of the control frame (in bytes)
 #define DATA_FRAME_LEN   7     // Length of the data frame header and trailer (in bytes)
 #define MAX_DATA_LEN     150   // Max data length to be sent in on packet: 2^16
-#define FER              3     // Frame error probability
+#define FER              1     // Frame error probability
 
 // Global variables
 extern int flag, attempts, DATA_C;
