@@ -286,6 +286,9 @@ int llread(int fd, char* buffer) {
   while(tmp_data_c == DATA_C) {
     length = receive_data_frame(fd, &data_c, buffer);
 
+    // Applying artificial FER
+    length = (rand() % 10) < FER ? -1 : length;
+
     if(length > -1) {
       command = data_c == DATA_C0 ? RR_C1 : RR_C0;
 

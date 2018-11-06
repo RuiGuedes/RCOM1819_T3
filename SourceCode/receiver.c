@@ -32,6 +32,9 @@ int main(int argc, char** argv)
   printf("Max attempts: %d\n", 3);
   printf("Timeout: %d seconds\n\n", 3);
 
+  // Initialization to avoid same random numbers
+  srand(time(NULL));
+
 	time_t begin = time(NULL);
 
 	receive_file(argv[1]);
