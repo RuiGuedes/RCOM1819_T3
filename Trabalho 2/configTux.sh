@@ -5,7 +5,7 @@ workbench=$2
 vlan=$3
 subnet=$4
 
-if [ "$#" -ne 3 ]; then
+if [ "$#" -ne 4 ]; then
     echo "Wrong number of arguments :: configtux.sh <interface> <workbench> <vlan> <subnet>"
 else
     /etc/init.d/networking restart
