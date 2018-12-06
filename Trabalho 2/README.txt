@@ -16,7 +16,12 @@
 #       -> reload
 #  4) Executar tux4.sh
 #  5) Executar tux1.sh tux2.sh
-#  6) Ping do tux1 para a net (Download)
+#  6) Para cada tux(1,2,4) executar
+#       -> gedit /etc/resolv.conf
+#       -> search netlab.fe.up.pt
+#       -> nameserver 172.16.1.1
+#  7) Check internet connection
+#  8) Download file 
 
 ############################
 ## Exp$W_wireshark($X.$Y) ##
