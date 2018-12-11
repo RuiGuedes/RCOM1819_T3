@@ -1,7 +1,7 @@
 CC = gcc 
 CFLAGS = -std=c99 -Wall -D_POSIX_C_SOURCE 
-DEPS = URL_parser.h
-DOWNLOAD_OBJ = download.o URL_parser.o
+DEPS = url_parser.h client_tcp.h
+DOWNLOAD_OBJ = download.o url_parser.o client_tcp.o
 
 all: download
 

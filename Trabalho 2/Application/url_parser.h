@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <termios.h>
 #include <regex.h>
 #include <errno.h>
 #include <arpa/inet.h>
@@ -13,10 +14,12 @@
 #include <sys/socket.h> 
 #include <sys/types.h>
 
+
 // Defines
 
 #define TCP_PORT 21
 #define HEADER_LEN 6
+#define MAX_PASSWD_LEN 30
 
 // RFC 1738 [Section 3] - FTP Conventions
 
@@ -50,5 +53,12 @@ int parse_url(char * url, URL * url_info);
  *  Argument: url_info  - Struct where URL information will be stored
  */
 int get_host_IP(char * host, URL * url_info);
+
+/**
+ *  Retrives password through input
+ *  
+ *  Argument: password  - Where user password will be stored
+ */
+int get_user_password(char * password);
 
 #endif
