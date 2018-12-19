@@ -24,14 +24,9 @@ int parse_url(char * url, URL * url_info) {
     char * password = strchr(new_url, ':');
     char * host = strchr(new_url, '@');
 
-    if(host) {
-        if((host - new_url) == 0) { // User is not present on the URL
-            user_presence = 0;
-        }      
-    }
-    else {
-        printf("Invalid URL :: Missing [host] parameter\n");
-        return 1;
+    // User is not present on the URL
+    if(!host) {
+        user_presence = 0;
     }
     
     // Store information
@@ -41,18 +36,21 @@ int parse_url(char * url, URL * url_info) {
     if(user_presence) {
         if(password) {
             memcpy(url_info->user, new_url, strlen(new_url) - strlen(password)); // Stores user
-            
+            url_info->user[strlen(new_url) - strlen(password)] = '\0';
+
             memcpy(url_info->password, password + 1, strlen(password) - strlen(host) - 1); // Stores user password
             url_info->password[strlen(password) - strlen(host) -1] = '\0';
         }
         else {
             memcpy(url_info->user, new_url, strlen(new_url) - strlen(host));
-            
+            url_info->user[strlen(new_url) - strlen(host)] = '\0';
+
             // Retrieve user password
             char pass[MAX_PASSWD_LEN + 1];
             get_user_password(pass);
 
-            memcpy(url_info->password, pass, strlen(pass)); 
+            memcpy(url_info->password, pass, strlen(pass));
+            url_info->password[strlen(pass)] = '\0';
         }
     }
     else {
@@ -69,8 +67,14 @@ int parse_url(char * url, URL * url_info) {
         printf("\n");
     }
 
-    memcpy(url_info->host, host + 1, strlen(host) - strlen(first_slash) - 1);
-    url_info->host[strlen(host) - strlen(first_slash)] = '\0';
+    if(host) {
+        memcpy(url_info->host, host + 1, strlen(host) - strlen(first_slash) - 1);
+        url_info->host[strlen(host) - strlen(first_slash)] = '\0';
+    }
+    else {
+        memcpy(url_info->host, new_url, strlen(new_url) - strlen(first_slash));
+        url_info->host[strlen(new_url) - strlen(first_slash) + 1] = '\0';
+    }
     
     memcpy(url_info->url_path, first_slash + 1, strlen(first_slash) - strlen(last_slash));
     url_info->url_path[strlen(first_slash) - strlen(last_slash)] = '\0';
