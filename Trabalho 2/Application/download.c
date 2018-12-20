@@ -5,7 +5,7 @@ int main(int argc, char ** argv) {
 
     // Function call validation
     if(argc != 2) {
-        printf("Usage :: dowload ftp://[<user>:<password>@]<host>/<url-path>\n");
+        printf("Usage :: download ftp://[<user>:<password>@]<host>/<url-path>\n");
         exit(1);
     }
 
